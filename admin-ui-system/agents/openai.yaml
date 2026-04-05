@@ -1,0 +1,5 @@
+interface:
+  display_name: Admin UI System
+  short_description: Apply a consistent design system for Next.js admin dashboards using shadcn/ui and Tailwind CSS.
+  icon: layout-dashboard
+  color: blue
