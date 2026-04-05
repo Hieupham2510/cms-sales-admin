@@ -32,7 +32,7 @@ export default async function InventoryAdjustmentsPage() {
     ),
   );
   const detailedCheckMap = new Map(
-    detailedChecks.filter(Boolean).map((item) => [item.id, item]),
+    detailedChecks.filter(Boolean).map((item) => [item?.id ?? "", item]),
   );
 
   return (
