@@ -1,7 +1,6 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { db } from "@/db";
 import { profiles } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
@@ -22,6 +21,23 @@ export async function loginWithUsernameAction(
   }
 
   try {
+    if (!process.env.DATABASE_URL) {
+      return { error: "Thiếu cấu hình DATABASE_URL trên môi trường deploy" };
+    }
+
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      return { error: "Thiếu cấu hình NEXT_PUBLIC_SUPABASE_URL trên môi trường deploy" };
+    }
+
+    if (!process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
+      return {
+        error:
+          "Thiếu cấu hình NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY trên môi trường deploy",
+      };
+    }
+
+    const { db } = await import("@/db");
+
     const profile = await db
       .select({
         email: profiles.email,
