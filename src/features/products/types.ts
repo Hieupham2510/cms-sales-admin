@@ -1,3 +1,5 @@
+import type { ProductVariantGroup } from "@/features/products/variant-utils";
+
 export type ProductImageItem = {
   id: string;
   imageUrl: string;
@@ -20,6 +22,7 @@ export type ProductDetail = {
 
   costPrice: string;
   salePrice: string;
+  variants: ProductVariantGroup[];
 
   currentStock: number;
   minStockAlert: number;
@@ -57,6 +60,7 @@ export type ProductRow = {
 
   costPrice: string;
   salePrice: string;
+  variants: ProductVariantGroup[];
 
   currentStock: number;
   minStockAlert: number;

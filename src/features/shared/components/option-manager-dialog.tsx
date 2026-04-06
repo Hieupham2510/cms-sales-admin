@@ -39,6 +39,7 @@ export function OptionManagerDialog({
 }: Props) {
   const [name, setName] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingItem, setDeletingItem] = useState<Item | null>(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
   const entityLabel = title.replace(/^Quản lý\s+/i, "").toLowerCase();
@@ -114,11 +115,6 @@ export function OptionManagerDialog({
   };
 
   const handleDelete = (item: Item) => {
-    const confirmed = window.confirm(
-      `Bạn có chắc chắn muốn xóa ${entityLabel} "${item.name}"?`,
-    );
-    if (!confirmed) return;
-
     startTransition(async () => {
       try {
         await deleteAction({ id: item.id });
@@ -133,6 +129,7 @@ export function OptionManagerDialog({
         setError(message);
         toast.error(message);
       }
+      setDeletingItem(null);
     });
   };
 
@@ -195,7 +192,7 @@ export function OptionManagerDialog({
                           type="button"
                           variant="outline"
                           size="icon"
-                          onClick={() => handleDelete(item)}
+                          onClick={() => setDeletingItem(item)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -229,6 +226,32 @@ export function OptionManagerDialog({
             </table>
           </div>
         </div>
+
+        <Dialog open={Boolean(deletingItem)} onOpenChange={(open) => !open && setDeletingItem(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Xác nhận xóa</DialogTitle>
+            </DialogHeader>
+
+            <p className="text-sm text-muted-foreground">
+              {`Bạn có chắc chắn muốn xóa ${entityLabel} "${deletingItem?.name ?? ""}"?`}
+            </p>
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setDeletingItem(null)}>
+                Hủy
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={isPending || !deletingItem}
+                onClick={() => deletingItem && handleDelete(deletingItem)}
+              >
+                Xóa
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );

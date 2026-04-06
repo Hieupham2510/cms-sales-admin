@@ -86,6 +86,7 @@ export function ProductForm({
       locationId: defaultValues?.locationId ?? "",
       costPrice: defaultValues?.costPrice ?? "0",
       salePrice: defaultValues?.salePrice ?? "0",
+      variants: defaultValues?.variants ?? [],
       currentStock: defaultValues?.currentStock,
       minStockAlert: defaultValues?.minStockAlert,
       maxStockAlert: defaultValues?.maxStockAlert,

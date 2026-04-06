@@ -3,3 +3,7 @@ export function generateProductSku() {
   return `LC${random}`;
 }
 
+export function generateCustomerCode() {
+  const random = Math.floor(100000 + Math.random() * 900000);
+  return `KH${random}`;
+}

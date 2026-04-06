@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
-import { ChevronUp } from "lucide-react";
+import { ChevronUp, Plus, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -67,6 +68,10 @@ function formatVndInput(value: string) {
   return formatNumberInput(value);
 }
 
+function createLocalId(prefix: string) {
+  return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 function SectionCard({
   title,
   description,
@@ -112,6 +117,7 @@ export default function ProductInformationTab({
   const categoryId = watch("categoryId") || "";
   const brandId = watch("brandId") || "";
   const locationId = watch("locationId") || "";
+  const variants = watch("variants") || [];
   const currentStock = watch("currentStock");
   const minStockAlert = watch("minStockAlert");
   const maxStockAlert = watch("maxStockAlert");
@@ -125,6 +131,13 @@ export default function ProductInformationTab({
   const selectedLocationName = locationOptions.find(
     (item) => item.id === locationId,
   )?.name;
+
+  const updateVariants = (
+    updater: (current: NonNullable<typeof variants>) => NonNullable<typeof variants>,
+  ) => {
+    const next = updater((watch("variants") || []) as NonNullable<typeof variants>);
+    setValue("variants", next, { shouldDirty: true });
+  };
 
   return (
     <div className="space-y-4">
@@ -269,6 +282,202 @@ export default function ProductInformationTab({
               Thiết lập giá
             </button>
           </div> */}
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Biến thể"
+        description="Thiết lập thuộc tính phân loại (ví dụ: Kích cỡ, Màu sắc) và phụ thu giá cho từng giá trị."
+      >
+        <div className="space-y-3">
+          {variants.length === 0 ? (
+            <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+              Chưa có biến thể. Bạn có thể thêm nhóm thuộc tính như Kích cỡ, Màu sắc.
+            </div>
+          ) : null}
+
+          {variants.map((group, groupIndex) => (
+            <div key={group.id} className="rounded-lg border p-3">
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <div className="grid flex-1 grid-cols-[1fr] gap-2 md:grid-cols-[220px_1fr]">
+                  <div className="space-y-2">
+                    <Label>Tên thuộc tính</Label>
+                    <Input
+                      value={group.name}
+                      onChange={(event) =>
+                        updateVariants((current) =>
+                          current.map((item, index) =>
+                            index === groupIndex
+                              ? {
+                                  ...item,
+                                  name: event.target.value,
+                                }
+                              : item,
+                          ),
+                        )
+                      }
+                      placeholder="Ví dụ: Kích cỡ / Màu sắc"
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="self-end text-muted-foreground hover:text-destructive"
+                  onClick={() =>
+                    updateVariants((current) =>
+                      current.filter((_, index) => index !== groupIndex),
+                    )
+                  }
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                {group.values.map((value, valueIndex) => (
+                  <div
+                    key={value.id}
+                    className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_220px_auto]"
+                  >
+                    <Input
+                      value={value.label}
+                      onChange={(event) =>
+                        updateVariants((current) =>
+                          current.map((item, index) =>
+                            index === groupIndex
+                              ? {
+                                  ...item,
+                                  values: item.values.map((child, childIndex) =>
+                                    childIndex === valueIndex
+                                      ? {
+                                          ...child,
+                                          label: event.target.value,
+                                        }
+                                      : child,
+                                  ),
+                                }
+                              : item,
+                          ),
+                        )
+                      }
+                      placeholder="Giá trị (S, M, L, Đỏ, Xanh...)"
+                    />
+
+                    <div className="grid grid-cols-[1fr_auto]">
+                      <Input
+                        value={formatVndInput(value.priceAdjustment || "0")}
+                        onChange={(event) =>
+                          updateVariants((current) =>
+                            current.map((item, index) =>
+                              index === groupIndex
+                                ? {
+                                    ...item,
+                                    values: item.values.map((child, childIndex) =>
+                                      childIndex === valueIndex
+                                        ? {
+                                            ...child,
+                                            priceAdjustment:
+                                              toDigits(event.target.value) || "0",
+                                          }
+                                        : child,
+                                    ),
+                                  }
+                                : item,
+                            ),
+                          )
+                        }
+                        className="rounded-r-none border-r-0 text-right"
+                        placeholder="0"
+                        inputMode="numeric"
+                      />
+                      <div className="inline-flex items-center rounded-r-lg border border-input bg-muted px-3 text-sm text-muted-foreground">
+                        VND
+                      </div>
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="text-muted-foreground hover:text-destructive"
+                      onClick={() =>
+                        updateVariants((current) =>
+                          current.map((item, index) =>
+                            index === groupIndex
+                              ? {
+                                  ...item,
+                                  values: item.values.filter(
+                                    (_, childIndex) => childIndex !== valueIndex,
+                                  ),
+                                }
+                              : item,
+                          ),
+                        )
+                      }
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    updateVariants((current) =>
+                      current.map((item, index) =>
+                        index === groupIndex
+                          ? {
+                              ...item,
+                              values: [
+                                ...item.values,
+                                {
+                                  id: createLocalId("variant-value"),
+                                  label: "",
+                                  priceAdjustment: "0",
+                                },
+                              ],
+                            }
+                          : item,
+                      ),
+                    )
+                  }
+                >
+                  <Plus className="h-4 w-4" />
+                  Thêm giá trị
+                </Button>
+              </div>
+            </div>
+          ))}
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() =>
+              updateVariants((current) => [
+                ...current,
+                {
+                  id: createLocalId("variant-group"),
+                  name: "",
+                  values: [
+                    {
+                      id: createLocalId("variant-value"),
+                      label: "",
+                      priceAdjustment: "0",
+                    },
+                  ],
+                },
+              ])
+            }
+          >
+            <Plus className="h-4 w-4" />
+            Thêm thuộc tính
+          </Button>
         </div>
       </SectionCard>
 

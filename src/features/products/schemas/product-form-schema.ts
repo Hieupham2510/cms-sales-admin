@@ -27,6 +27,27 @@ export const productFormSchema = z.object({
   costPrice: z.string().default("0"),
   salePrice: z.string().default("0"),
 
+  variants: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        name: z.string().trim().min(1, "Tên thuộc tính là bắt buộc"),
+        values: z
+          .array(
+            z.object({
+              id: z.string().min(1),
+              label: z.string().trim().min(1, "Giá trị thuộc tính là bắt buộc"),
+              priceAdjustment: z
+                .string()
+                .regex(/^\d+(\.\d{1,2})?$/, "Phụ thu giá không hợp lệ")
+                .default("0"),
+            }),
+          )
+          .min(1, "Mỗi thuộc tính cần ít nhất 1 giá trị"),
+      }),
+    )
+    .default([]),
+
   currentStock: z.coerce.number().default(0),
   minStockAlert: z.coerce.number().default(0),
   maxStockAlert: z.coerce.number().default(0),

@@ -72,6 +72,7 @@ export async function getProducts(params: GetProductsParams) {
       name: products.name,
       costPrice: products.costPrice,
       salePrice: products.salePrice,
+      variants: products.variants,
       currentStock: products.currentStock,
       minStockAlert: products.minStockAlert,
       maxStockAlert: products.maxStockAlert,

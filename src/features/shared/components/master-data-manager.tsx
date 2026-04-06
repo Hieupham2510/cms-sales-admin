@@ -43,6 +43,7 @@ export function MasterDataManager({
 }: Props) {
   const [items, setItems] = useState<Item[]>(sortByName(initialItems))
   const [open, setOpen] = useState(false)
+  const [deletingItem, setDeletingItem] = useState<Item | null>(null)
   const [name, setName] = useState("")
   const [editingId, setEditingId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -115,11 +116,6 @@ export function MasterDataManager({
   }
 
   const handleDelete = (item: Item) => {
-    const confirmed = window.confirm(
-      `Bạn có chắc chắn muốn xóa ${entityLabel} "${item.name}"?`,
-    )
-    if (!confirmed) return
-
     startTransition(async () => {
       try {
         await deleteAction({ id: item.id })
@@ -128,6 +124,7 @@ export function MasterDataManager({
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Không thể xóa dữ liệu")
       }
+      setDeletingItem(null)
     })
   }
 
@@ -177,7 +174,7 @@ export function MasterDataManager({
                         type="button"
                         size="icon-sm"
                         variant="ghost"
-                        onClick={() => handleDelete(item)}
+                        onClick={() => setDeletingItem(item)}
                       >
                         <Trash2 className="size-4 text-destructive" />
                       </Button>
@@ -220,6 +217,32 @@ export function MasterDataManager({
             </Button>
             <Button type="button" onClick={handleSave} disabled={isPending}>
               {editingId ? "Cập nhật" : "Tạo mới"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(deletingItem)} onOpenChange={(nextOpen) => !nextOpen && setDeletingItem(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Xác nhận xóa</DialogTitle>
+          </DialogHeader>
+
+          <p className="text-sm text-muted-foreground">
+            {`Bạn có chắc chắn muốn xóa ${entityLabel} "${deletingItem?.name ?? ""}"?`}
+          </p>
+
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => setDeletingItem(null)}>
+              Hủy
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={isPending || !deletingItem}
+              onClick={() => deletingItem && handleDelete(deletingItem)}
+            >
+              Xóa
             </Button>
           </div>
         </DialogContent>

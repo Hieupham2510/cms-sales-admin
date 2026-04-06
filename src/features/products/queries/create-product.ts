@@ -1,5 +1,6 @@
 import { db } from "@/db";
 import { products } from "@/db/schema";
+import type { ProductVariantGroup } from "@/features/products/variant-utils";
 
 export type CreateProductInput = {
   storeId: string;
@@ -11,6 +12,7 @@ export type CreateProductInput = {
   name: string;
   costPrice: string;
   salePrice: string;
+  variants?: ProductVariantGroup[];
   currentStock?: number;
   minStockAlert?: number;
   maxStockAlert?: number;
@@ -34,6 +36,7 @@ export async function createProduct(input: CreateProductInput) {
       name: input.name,
       costPrice: input.costPrice,
       salePrice: input.salePrice,
+      variants: input.variants ?? [],
       currentStock: input.currentStock ?? 0,
       minStockAlert: input.minStockAlert ?? 0,
       maxStockAlert: input.maxStockAlert ?? 0,

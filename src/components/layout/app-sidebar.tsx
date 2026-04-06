@@ -9,6 +9,15 @@ import { cn } from "@/lib/utils"
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const activeHref =
+    DASHBOARD_NAV
+      .slice()
+      .sort((a, b) => b.href.length - a.href.length)
+      .find(
+        (item) =>
+          pathname === item.href ||
+          (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`))
+      )?.href ?? ""
 
   return (
     <aside className="hidden h-screen w-[272px] shrink-0 border-r border-sidebar-border bg-sidebar lg:flex lg:flex-col">
@@ -18,9 +27,7 @@ export function AppSidebar() {
 
       <nav className="flex-1 space-y-1.5 p-3">
         {DASHBOARD_NAV.map((item) => {
-          const isActive =
-            pathname === item.href ||
-            (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`))
+          const isActive = activeHref === item.href
 
           return (
             <Link

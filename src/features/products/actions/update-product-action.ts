@@ -14,6 +14,7 @@ import {
   productFormSchema,
   type ProductFormValues,
 } from "@/features/products/schemas/product-form-schema";
+import { normalizeProductVariants } from "@/features/products/variant-utils";
 
 const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f";
 
@@ -57,6 +58,7 @@ export async function updateProductAction(
     locationId: parsed.locationId ?? null,
     costPrice: parsed.costPrice,
     salePrice: parsed.salePrice,
+    variants: normalizeProductVariants(parsed.variants),
     currentStock: parsed.currentStock,
     minStockAlert: parsed.minStockAlert,
     maxStockAlert: parsed.maxStockAlert,

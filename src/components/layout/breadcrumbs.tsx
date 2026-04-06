@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react"
 const LABEL_MAP: Record<string, string> = {
   dashboard: "Tổng quan",
   products: "Hàng hóa",
+  customers: "Khách hàng",
   categories: "Nhóm hàng",
   brands: "Thương hiệu",
   locations: "Kho",
@@ -24,10 +25,13 @@ const LABEL_MAP: Record<string, string> = {
 export function Breadcrumbs() {
   const pathname = usePathname()
   const [productName, setProductName] = useState<string | null>(null)
+  const [customerName, setCustomerName] = useState<string | null>(null)
 
   const parts = useMemo(() => pathname.split("/").filter(Boolean), [pathname])
   const isProductDetailPage = parts[0] === "products" && parts.length === 2 && parts[1] !== "new"
+  const isCustomerDetailPage = parts[0] === "customers" && parts.length === 2 && parts[1] !== "new"
   const productId = isProductDetailPage ? parts[1] : null
+  const customerId = isCustomerDetailPage ? parts[1] : null
 
   useEffect(() => {
     let cancelled = false
@@ -61,12 +65,47 @@ export function Breadcrumbs() {
     }
   }, [productId])
 
+  useEffect(() => {
+    let cancelled = false
+
+    async function fetchCustomerName(id: string) {
+      try {
+        const response = await fetch(`/api/customers/${id}`, {
+          method: "GET",
+          cache: "no-store",
+        })
+        if (!response.ok) {
+          if (!cancelled) setCustomerName(null)
+          return
+        }
+
+        const data = (await response.json()) as { name?: string | null }
+        if (!cancelled) {
+          setCustomerName(data.name ?? null)
+        }
+      } catch {
+        if (!cancelled) setCustomerName(null)
+      }
+    }
+
+    if (customerId) {
+      fetchCustomerName(customerId)
+    }
+
+    return () => {
+      cancelled = true
+    }
+  }, [customerId])
+
   const crumbs = parts.map((part, index) => {
     const href = `/${parts.slice(0, index + 1).join("/")}`
     const isProductIdCrumb = productId && part === productId
+    const isCustomerIdCrumb = customerId && part === customerId
     const label = isProductIdCrumb
       ? (productName ?? part.toUpperCase())
-      : (LABEL_MAP[part] ?? part.toUpperCase())
+      : isCustomerIdCrumb
+        ? (customerName ?? part.toUpperCase())
+        : (LABEL_MAP[part] ?? part.toUpperCase())
 
     return { href, label }
   })

@@ -1,7 +1,13 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { deleteProductAction } from "@/features/products/actions/delete-product-action";
 import type { ProductRow } from "../types";
 
 type Props = {
@@ -64,6 +70,23 @@ function getStockStatusBadge(status: ReturnType<typeof getStockStatus>) {
 
 export function ProductsTable({ data }: Props) {
   const router = useRouter();
+  const [deletingProduct, setDeletingProduct] = useState<ProductRow | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const handleDeleteProduct = () => {
+    if (!deletingProduct) return;
+
+    startTransition(async () => {
+      try {
+        await deleteProductAction(deletingProduct.id);
+        toast.success("Xóa sản phẩm thành công");
+        setDeletingProduct(null);
+        router.refresh();
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Không thể xóa sản phẩm");
+      }
+    });
+  };
 
   return (
     <div className="table-shell">
@@ -92,8 +115,8 @@ export function ProductsTable({ data }: Props) {
               <th className="h-11 px-4 text-left font-medium text-muted-foreground">
                 Thời gian tạo
               </th>
-              <th className="h-11 px-4 text-left font-medium text-muted-foreground">
-                Dự kiến hết hàng
+              <th className="h-11 px-4 text-right font-medium text-muted-foreground">
+                Thao tác
               </th>
             </tr>
           </thead>
@@ -169,8 +192,24 @@ export function ProductsTable({ data }: Props) {
                     {formatDate(item.createdAt)}
                   </td>
 
-                  <td className="px-4 py-3 align-top text-muted-foreground">
-                    ---
+                  <td
+                    className="px-4 py-3 align-top"
+                    onClick={(event) => event.stopPropagation()}
+                    onKeyDown={(event) => event.stopPropagation()}
+                  >
+                    <div className="flex justify-end">
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className="text-muted-foreground hover:text-destructive"
+                        onClick={() => setDeletingProduct(item)}
+                        aria-label={`Xóa sản phẩm ${item.name}`}
+                        title="Xóa sản phẩm"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               );
@@ -189,6 +228,40 @@ export function ProductsTable({ data }: Props) {
           </tbody>
         </table>
       </div>
+
+      <Dialog
+        open={Boolean(deletingProduct)}
+        onOpenChange={(open) => !open && setDeletingProduct(null)}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Xác nhận xóa sản phẩm</DialogTitle>
+          </DialogHeader>
+
+          <p className="text-sm text-muted-foreground">
+            {`Bạn có chắc chắn muốn xóa sản phẩm "${deletingProduct?.name ?? ""}"?`}
+          </p>
+
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDeletingProduct(null)}
+              disabled={isPending}
+            >
+              Không
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDeleteProduct}
+              disabled={isPending}
+            >
+              {isPending ? "Đang xóa..." : "Xóa sản phẩm"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

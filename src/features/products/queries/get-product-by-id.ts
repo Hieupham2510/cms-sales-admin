@@ -26,6 +26,7 @@ export async function getProductById(params: Params) {
       name: products.name,
       costPrice: products.costPrice,
       salePrice: products.salePrice,
+      variants: products.variants,
       currentStock: products.currentStock,
       minStockAlert: products.minStockAlert,
       maxStockAlert: products.maxStockAlert,

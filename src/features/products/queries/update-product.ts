@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { products } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
+import type { ProductVariantGroup } from "@/features/products/variant-utils";
 
 export type UpdateProductInput = {
   id: string;
@@ -13,6 +14,7 @@ export type UpdateProductInput = {
   name?: string;
   costPrice?: string;
   salePrice?: string;
+  variants?: ProductVariantGroup[];
   currentStock?: number;
   minStockAlert?: number;
   maxStockAlert?: number;
@@ -35,6 +37,7 @@ export async function updateProduct(input: UpdateProductInput) {
       name: input.name,
       costPrice: input.costPrice,
       salePrice: input.salePrice,
+      variants: input.variants,
       currentStock: input.currentStock,
       minStockAlert: input.minStockAlert,
       maxStockAlert: input.maxStockAlert,

@@ -45,6 +45,7 @@ export default async function ProductDetailPage({
           locationId: product.locationId ?? "",
           costPrice: product.costPrice,
           salePrice: product.salePrice,
+          variants: product.variants ?? [],
           currentStock: product.currentStock,
           minStockAlert: product.minStockAlert,
           maxStockAlert: product.maxStockAlert,

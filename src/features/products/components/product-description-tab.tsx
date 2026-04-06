@@ -99,8 +99,8 @@ function DescriptionBox({
 }
 
 export default function ProductDescriptionTab({ form }: Props) {
-  const description = form.watch("description") ?? "";
-  const orderNote = form.watch("orderNote") ?? "";
+  const description = form.watch("description") as string ?? "";
+  const orderNote = form.watch("orderNote") as string ?? "";
 
   return (
     <div className="space-y-4">

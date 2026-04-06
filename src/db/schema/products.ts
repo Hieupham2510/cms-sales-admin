@@ -1,11 +1,14 @@
 import {
   integer,
+  jsonb,
   numeric,
   pgTable,
   text,
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import type { ProductVariantGroup } from "@/features/products/variant-utils";
 import { brands } from "./brands";
 import { categories } from "./categories";
 import { locations } from "./locations";
@@ -42,6 +45,11 @@ export const products = pgTable("products", {
   salePrice: numeric("sale_price", { precision: 12, scale: 2 })
     .notNull()
     .default("0"),
+
+  variants: jsonb("variants")
+    .$type<ProductVariantGroup[]>()
+    .notNull()
+    .default(sql`'[]'::jsonb`),
 
   currentStock: integer("current_stock").notNull().default(0),
   minStockAlert: integer("min_stock_alert").notNull().default(0),
