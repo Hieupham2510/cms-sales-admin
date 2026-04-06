@@ -6,11 +6,11 @@ import {
   updateLocationAction,
 } from "@/features/locations/actions/location-actions"
 import { getLocationsByStore } from "@/features/locations/queries/get-locations-by-store"
-
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f"
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context"
 
 export default async function LocationsPage() {
-  const locations = await getLocationsByStore(DEMO_STORE_ID)
+  const storeId = await getActiveStoreIdOrThrow()
+  const locations = await getLocationsByStore(storeId)
 
   return (
     <MasterDataManager

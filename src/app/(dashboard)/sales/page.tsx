@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
 import { SalesPos } from "@/features/sales/components/sales-pos";
 import { getSalesCustomers } from "@/features/sales/queries/get-sales-customers";
 import { getSalesProducts } from "@/features/sales/queries/get-sales-products";
 
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f";
-
 export default async function SalesPage() {
+  const storeId = await getActiveStoreIdOrThrow();
   const [products, customers] = await Promise.all([
-    getSalesProducts({ storeId: DEMO_STORE_ID }),
-    getSalesCustomers({ storeId: DEMO_STORE_ID }),
+    getSalesProducts({ storeId }),
+    getSalesCustomers({ storeId }),
   ]);
 
   return (

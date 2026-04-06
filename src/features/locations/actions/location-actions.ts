@@ -3,11 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { locations } from "@/db/schema";
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
 import { and, asc, eq } from "drizzle-orm";
 
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f";
-
 export async function listLocationsAction() {
+  const storeId = await getActiveStoreIdOrThrow();
+
   return db
     .select({
       id: locations.id,
@@ -15,7 +16,7 @@ export async function listLocationsAction() {
       code: locations.code,
     })
     .from(locations)
-    .where(eq(locations.storeId, DEMO_STORE_ID))
+    .where(eq(locations.storeId, storeId))
     .orderBy(asc(locations.name));
 }
 
@@ -23,6 +24,7 @@ export async function createLocationAction(input: {
   name: string;
   code?: string;
 }) {
+  const storeId = await getActiveStoreIdOrThrow();
   const name = input.name.trim();
   const code = input.code?.trim() || null;
 
@@ -33,7 +35,7 @@ export async function createLocationAction(input: {
   const result = await db
     .insert(locations)
     .values({
-      storeId: DEMO_STORE_ID,
+      storeId,
       name,
       code,
       description: null,
@@ -56,6 +58,7 @@ export async function updateLocationAction(input: {
   name: string;
   code?: string;
 }) {
+  const storeId = await getActiveStoreIdOrThrow();
   const name = input.name.trim();
   const code = input.code?.trim() || null;
 
@@ -71,7 +74,7 @@ export async function updateLocationAction(input: {
       updatedAt: new Date(),
     })
     .where(
-      and(eq(locations.id, input.id), eq(locations.storeId, DEMO_STORE_ID)),
+      and(eq(locations.id, input.id), eq(locations.storeId, storeId)),
     )
     .returning({
       id: locations.id,
@@ -88,10 +91,11 @@ export async function updateLocationAction(input: {
 }
 
 export async function deleteLocationAction(input: { id: string }) {
+  const storeId = await getActiveStoreIdOrThrow();
   await db
     .delete(locations)
     .where(
-      and(eq(locations.id, input.id), eq(locations.storeId, DEMO_STORE_ID)),
+      and(eq(locations.id, input.id), eq(locations.storeId, storeId)),
     );
 
   revalidatePath("/products");

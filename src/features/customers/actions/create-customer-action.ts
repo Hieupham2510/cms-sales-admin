@@ -2,21 +2,21 @@
 
 import { db } from "@/db";
 import { customerAddresses, customers } from "@/db/schema";
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
 import {
   customerFormSchema,
   type CustomerFormValues,
 } from "@/features/customers/schemas/customer-form-schema";
 
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f";
-
 export async function createCustomerAction(values: CustomerFormValues) {
+  const storeId = await getActiveStoreIdOrThrow();
   const parsed = customerFormSchema.parse(values);
 
   return db.transaction(async (tx) => {
     const rows = await tx
       .insert(customers)
       .values({
-        storeId: DEMO_STORE_ID,
+        storeId,
         code: parsed.code,
         name: parsed.name,
         groupName: parsed.groupName ?? null,

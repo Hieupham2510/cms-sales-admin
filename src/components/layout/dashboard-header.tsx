@@ -1,25 +1,34 @@
-import { Bell, Search } from "lucide-react"
+import { Search } from "lucide-react"
 
 import { Breadcrumbs } from "@/components/layout/breadcrumbs"
 import { MobileSidebar } from "@/components/layout/mobile-sidebar"
 import { UserMenu } from "@/components/layout/user-menu"
-import { Button } from "@/components/ui/button"
+import { StoreSwitcher } from "@/features/auth/components/store-switcher"
 import { Input } from "@/components/ui/input"
+import type { AuthContext } from "@/features/auth/types"
 
-export function DashboardHeader() {
+type Props = {
+  auth: AuthContext
+}
+
+export function DashboardHeader({ auth }: Props) {
   return (
     <header className="border-b border-border bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/85 lg:px-6">
       <div className="flex min-h-14 items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
-          <MobileSidebar />
+          <MobileSidebar role={auth.role} />
           <Breadcrumbs />
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" aria-label="Thông báo">
-            <Bell className="size-4" />
-          </Button>
-          <UserMenu />
+          {auth.role === "admin" ? (
+            <StoreSwitcher activeStoreId={auth.activeStoreId} stores={auth.allowedStores} />
+          ) : null}
+          <UserMenu
+            fullName={auth.fullName}
+            username={auth.username}
+            role={auth.role}
+          />
         </div>
       </div>
 

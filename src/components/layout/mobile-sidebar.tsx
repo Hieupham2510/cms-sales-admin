@@ -5,13 +5,28 @@ import { usePathname } from "next/navigation"
 import { Menu } from "lucide-react"
 
 import { MaiLinhLogo } from "@/components/brand/mai-linh-logo"
-import { DASHBOARD_NAV } from "@/lib/constants"
+import { getDashboardNavGroupsByRole } from "@/lib/constants"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 
-export function MobileSidebar() {
+type Props = {
+  role: "admin" | "manager" | "staff"
+}
+
+export function MobileSidebar({ role }: Props) {
   const pathname = usePathname()
+  const navGroups = getDashboardNavGroupsByRole(role)
+  const navItems = navGroups.flatMap((group) => group.items)
+  const activeHref =
+    navItems
+      .slice()
+      .sort((a, b) => b.href.length - a.href.length)
+      .find(
+        (item) =>
+          pathname === item.href ||
+          (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`))
+      )?.href ?? ""
 
   return (
     <Sheet>
@@ -27,24 +42,35 @@ export function MobileSidebar() {
           </SheetTitle>
         </SheetHeader>
 
-        <nav className="space-y-1.5 p-3">
-          {DASHBOARD_NAV.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "block rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-foreground hover:bg-accent hover:text-accent-foreground"
-                )}
-              >
-                {item.label}
-              </Link>
-            )
-          })}
+        <nav className="space-y-4 p-3">
+          {navGroups.map((group) => (
+            <div key={group.label} className="space-y-1.5">
+              <p className="px-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {group.label}
+              </p>
+              {group.items.map((item) => {
+                const isActive = activeHref === item.href
+                const Icon = item.icon
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    prefetch={false}
+                    className={cn(
+                      "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : "text-foreground hover:bg-accent hover:text-accent-foreground"
+                    )}
+                  >
+                    <Icon className="size-4 shrink-0" />
+                    <span>{item.label}</span>
+                  </Link>
+                )
+              })}
+            </div>
+          ))}
         </nav>
       </SheetContent>
     </Sheet>

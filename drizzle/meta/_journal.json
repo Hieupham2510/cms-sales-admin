@@ -57,6 +57,13 @@
       "when": 1775481000000,
       "tag": "0007_hushed_snowbird",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1775487000000,
+      "tag": "0008_solid_turbo",
+      "breakpoints": true
     }
   ]
 }

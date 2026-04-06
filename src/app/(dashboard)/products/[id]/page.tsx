@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { ProductForm } from "@/features/products/components/product-form";
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
 import { getCategoriesByStore } from "@/features/categories/queries/get-categories-by-store";
 import { getBrandsByStore } from "@/features/brands/queries/get-brands-by-store";
 import { getLocationsByStore } from "@/features/locations/queries/get-locations-by-store";
@@ -7,20 +8,19 @@ import { getProductById } from "@/features/products/queries/get-product-by-id";
 import { updateProductAction } from "@/features/products/actions/update-product-action";
 import type { ProductFormValues } from "@/features/products/schemas/product-form-schema";
 
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f";
-
 export default async function ProductDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const storeId = await getActiveStoreIdOrThrow();
 
   const [categories, brands, locations, product] = await Promise.all([
-    getCategoriesByStore(DEMO_STORE_ID),
-    getBrandsByStore(DEMO_STORE_ID),
-    getLocationsByStore(DEMO_STORE_ID),
-    getProductById({ id, storeId: DEMO_STORE_ID }),
+    getCategoriesByStore(storeId),
+    getBrandsByStore(storeId),
+    getLocationsByStore(storeId),
+    getProductById({ id, storeId }),
   ]);
 
   if (!product) {

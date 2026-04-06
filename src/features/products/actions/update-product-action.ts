@@ -9,14 +9,13 @@ import { getProductStockSnapshot } from "@/features/products/queries/get-product
 import { createProductImages } from "@/features/products/queries/create-product-images";
 import { uploadProductImage } from "@/features/products/lib/upload-product-image";
 import { createAutoInventoryCheckFromStockChange } from "@/features/inventory-checks/services/create-auto-inventory-check-from-stock-change";
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
 import { createClient } from "@/lib/supabase/server";
 import {
   productFormSchema,
   type ProductFormValues,
 } from "@/features/products/schemas/product-form-schema";
 import { normalizeProductVariants } from "@/features/products/variant-utils";
-
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f";
 
 function extractProductImagePath(publicUrl: string) {
   const marker = "/storage/v1/object/public/product-images/";
@@ -32,6 +31,7 @@ export async function updateProductAction(
   productId: string,
   values: ProductFormValues,
 ) {
+  const storeId = await getActiveStoreIdOrThrow();
   const parsed = productFormSchema.parse(values);
   const supabase = await createClient();
   const {
@@ -40,7 +40,7 @@ export async function updateProductAction(
 
   const beforeSnapshot = await getProductStockSnapshot({
     id: productId,
-    storeId: DEMO_STORE_ID,
+    storeId,
   });
 
   if (!beforeSnapshot) {
@@ -49,7 +49,7 @@ export async function updateProductAction(
 
   await updateProduct({
     id: productId,
-    storeId: DEMO_STORE_ID,
+    storeId,
     sku: parsed.sku,
     barcode: parsed.barcode ?? null,
     name: parsed.name,
@@ -139,7 +139,7 @@ export async function updateProductAction(
   }
 
   await createAutoInventoryCheckFromStockChange({
-    storeId: DEMO_STORE_ID,
+    storeId,
     productId,
     sku: parsed.sku,
     productName: parsed.name,

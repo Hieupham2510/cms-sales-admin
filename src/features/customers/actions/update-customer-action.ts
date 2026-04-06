@@ -3,17 +3,17 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { customerAddresses, customers } from "@/db/schema";
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
 import {
   customerFormSchema,
   type CustomerFormValues,
 } from "@/features/customers/schemas/customer-form-schema";
 
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f";
-
 export async function updateCustomerAction(
   customerId: string,
   values: CustomerFormValues,
 ) {
+  const storeId = await getActiveStoreIdOrThrow();
   const parsed = customerFormSchema.parse(values);
 
   return db.transaction(async (tx) => {
@@ -43,7 +43,7 @@ export async function updateCustomerAction(
         billingWard: parsed.billingWard ?? null,
         updatedAt: new Date(),
       })
-      .where(and(eq(customers.id, customerId), eq(customers.storeId, DEMO_STORE_ID)));
+      .where(and(eq(customers.id, customerId), eq(customers.storeId, storeId)));
 
     await tx
       .delete(customerAddresses)

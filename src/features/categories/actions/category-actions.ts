@@ -3,9 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { categories } from "@/db/schema";
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
 import { and, asc, eq } from "drizzle-orm";
-
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f";
 
 function slugify(value: string) {
   return value
@@ -19,6 +18,8 @@ function slugify(value: string) {
 }
 
 export async function listCategoriesAction() {
+  const storeId = await getActiveStoreIdOrThrow();
+
   return db
     .select({
       id: categories.id,
@@ -26,11 +27,12 @@ export async function listCategoriesAction() {
       slug: categories.slug,
     })
     .from(categories)
-    .where(eq(categories.storeId, DEMO_STORE_ID))
+    .where(eq(categories.storeId, storeId))
     .orderBy(asc(categories.name));
 }
 
 export async function createCategoryAction(input: { name: string }) {
+  const storeId = await getActiveStoreIdOrThrow();
   const name = input.name.trim();
 
   if (!name) {
@@ -42,7 +44,7 @@ export async function createCategoryAction(input: { name: string }) {
   const result = await db
     .insert(categories)
     .values({
-      storeId: DEMO_STORE_ID,
+      storeId,
       name,
       slug,
       description: null,
@@ -61,6 +63,7 @@ export async function updateCategoryAction(input: {
   id: string;
   name: string;
 }) {
+  const storeId = await getActiveStoreIdOrThrow();
   const name = input.name.trim();
 
   if (!name) {
@@ -77,7 +80,7 @@ export async function updateCategoryAction(input: {
       updatedAt: new Date(),
     })
     .where(
-      and(eq(categories.id, input.id), eq(categories.storeId, DEMO_STORE_ID)),
+      and(eq(categories.id, input.id), eq(categories.storeId, storeId)),
     )
     .returning({
       id: categories.id,
@@ -90,10 +93,11 @@ export async function updateCategoryAction(input: {
 }
 
 export async function deleteCategoryAction(input: { id: string }) {
+  const storeId = await getActiveStoreIdOrThrow();
   await db
     .delete(categories)
     .where(
-      and(eq(categories.id, input.id), eq(categories.storeId, DEMO_STORE_ID)),
+      and(eq(categories.id, input.id), eq(categories.storeId, storeId)),
     );
 
   revalidatePath("/products");

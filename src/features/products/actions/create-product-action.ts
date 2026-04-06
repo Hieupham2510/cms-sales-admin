@@ -4,6 +4,7 @@ import { createProduct } from "@/features/products/queries/create-product";
 import { createProductImages } from "@/features/products/queries/create-product-images";
 import { uploadProductImage } from "@/features/products/lib/upload-product-image";
 import { createAutoInventoryCheckFromStockChange } from "@/features/inventory-checks/services/create-auto-inventory-check-from-stock-change";
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
 import { createClient } from "@/lib/supabase/server";
 import {
   productFormSchema,
@@ -11,9 +12,8 @@ import {
 } from "@/features/products/schemas/product-form-schema";
 import { normalizeProductVariants } from "@/features/products/variant-utils";
 
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f";
-
 export async function createProductAction(values: ProductFormValues) {
+  const storeId = await getActiveStoreIdOrThrow();
   const parsed = productFormSchema.parse(values);
   const supabase = await createClient();
   const {
@@ -21,7 +21,7 @@ export async function createProductAction(values: ProductFormValues) {
   } = await supabase.auth.getUser();
 
   const product = await createProduct({
-    storeId: DEMO_STORE_ID,
+    storeId,
     sku: parsed.sku,
     barcode: parsed.barcode ?? null,
     name: parsed.name,
@@ -83,7 +83,7 @@ export async function createProductAction(values: ProductFormValues) {
 
   if (parsed.currentStock > 0) {
     await createAutoInventoryCheckFromStockChange({
-      storeId: DEMO_STORE_ID,
+      storeId,
       productId: product.id,
       sku: parsed.sku,
       productName: parsed.name,

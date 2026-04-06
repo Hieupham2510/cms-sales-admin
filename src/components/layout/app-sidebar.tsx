@@ -4,13 +4,19 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 import { MaiLinhLogo } from "@/components/brand/mai-linh-logo"
-import { DASHBOARD_NAV } from "@/lib/constants"
+import { getDashboardNavGroupsByRole } from "@/lib/constants"
 import { cn } from "@/lib/utils"
 
-export function AppSidebar() {
+type Props = {
+  role: "admin" | "manager" | "staff"
+}
+
+export function AppSidebar({ role }: Props) {
   const pathname = usePathname()
+  const navGroups = getDashboardNavGroupsByRole(role)
+  const navItems = navGroups.flatMap((group) => group.items)
   const activeHref =
-    DASHBOARD_NAV
+    navItems
       .slice()
       .sort((a, b) => b.href.length - a.href.length)
       .find(
@@ -25,25 +31,35 @@ export function AppSidebar() {
         <MaiLinhLogo compact />
       </div>
 
-      <nav className="flex-1 space-y-1.5 p-3">
-        {DASHBOARD_NAV.map((item) => {
-          const isActive = activeHref === item.href
+      <nav className="flex-1 space-y-4 overflow-y-auto p-3">
+        {navGroups.map((group) => (
+          <div key={group.label} className="space-y-1.5">
+            <p className="px-2 text-xs font-medium uppercase tracking-wide text-sidebar-foreground/60">
+              {group.label}
+            </p>
+            {group.items.map((item) => {
+              const isActive = activeHref === item.href
+              const Icon = item.icon
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "block rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              )}
-            >
-              {item.label}
-            </Link>
-          )
-        })}
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  prefetch={false}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  )}
+                >
+                  <Icon className="size-4 shrink-0" />
+                  <span>{item.label}</span>
+                </Link>
+              )
+            })}
+          </div>
+        ))}
       </nav>
     </aside>
   )

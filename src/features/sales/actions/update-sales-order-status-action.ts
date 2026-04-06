@@ -10,13 +10,12 @@ import {
   salesOrderStatusLogs,
   salesOrders,
 } from "@/db/schema";
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
 import { createClient } from "@/lib/supabase/server";
 import {
   updateSalesOrderStatusSchema,
   type UpdateSalesOrderStatusInput,
 } from "@/features/sales/schemas/update-sales-order-status-schema";
-
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f";
 
 type Params = {
   orderId: string;
@@ -24,6 +23,7 @@ type Params = {
 };
 
 export async function updateSalesOrderStatusAction(params: Params) {
+  const storeId = await getActiveStoreIdOrThrow();
   const parsed = updateSalesOrderStatusSchema.parse(params.input);
 
   const supabase = await createClient();
@@ -42,7 +42,7 @@ export async function updateSalesOrderStatusAction(params: Params) {
       .where(
         and(
           eq(salesOrders.id, params.orderId),
-          eq(salesOrders.storeId, DEMO_STORE_ID),
+          eq(salesOrders.storeId, storeId),
         ),
       )
       .limit(1);
@@ -92,12 +92,12 @@ export async function updateSalesOrderStatusAction(params: Params) {
             currentStock: sql`${products.currentStock} + ${item.quantity}`,
             updatedAt: new Date(),
           })
-          .where(and(eq(products.id, item.productId), eq(products.storeId, DEMO_STORE_ID)));
+          .where(and(eq(products.id, item.productId), eq(products.storeId, storeId)));
       }
 
       await tx.insert(inventoryTransactions).values(
         items.map((item) => ({
-          storeId: DEMO_STORE_ID,
+          storeId,
           productId: item.productId,
           type: "adjustment",
           quantity: item.quantity,

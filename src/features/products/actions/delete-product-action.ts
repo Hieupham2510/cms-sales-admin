@@ -4,9 +4,8 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { productImages, products } from "@/db/schema";
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
 import { createClient } from "@/lib/supabase/server";
-
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f";
 
 function extractProductImagePath(publicUrl: string) {
   const marker = "/storage/v1/object/public/product-images/";
@@ -19,6 +18,7 @@ function extractProductImagePath(publicUrl: string) {
 }
 
 export async function deleteProductAction(productId: string) {
+  const storeId = await getActiveStoreIdOrThrow();
   const supabase = await createClient();
 
   const product = await db
@@ -26,7 +26,7 @@ export async function deleteProductAction(productId: string) {
       id: products.id,
     })
     .from(products)
-    .where(and(eq(products.id, productId), eq(products.storeId, DEMO_STORE_ID)))
+    .where(and(eq(products.id, productId), eq(products.storeId, storeId)))
     .limit(1);
 
   if (!product[0]) {
@@ -42,7 +42,7 @@ export async function deleteProductAction(productId: string) {
 
   await db
     .delete(products)
-    .where(and(eq(products.id, productId), eq(products.storeId, DEMO_STORE_ID)));
+    .where(and(eq(products.id, productId), eq(products.storeId, storeId)));
 
   const removablePaths = images
     .map((item) => extractProductImagePath(item.imageUrl))

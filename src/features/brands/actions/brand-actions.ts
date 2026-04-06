@@ -3,9 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { brands } from "@/db/schema";
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
 import { and, asc, eq } from "drizzle-orm";
-
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f";
 
 function slugify(value: string) {
   return value
@@ -19,6 +18,8 @@ function slugify(value: string) {
 }
 
 export async function listBrandsAction() {
+  const storeId = await getActiveStoreIdOrThrow();
+
   return db
     .select({
       id: brands.id,
@@ -26,11 +27,12 @@ export async function listBrandsAction() {
       slug: brands.slug,
     })
     .from(brands)
-    .where(eq(brands.storeId, DEMO_STORE_ID))
+    .where(eq(brands.storeId, storeId))
     .orderBy(asc(brands.name));
 }
 
 export async function createBrandAction(input: { name: string }) {
+  const storeId = await getActiveStoreIdOrThrow();
   const name = input.name.trim();
 
   if (!name) {
@@ -42,7 +44,7 @@ export async function createBrandAction(input: { name: string }) {
   const result = await db
     .insert(brands)
     .values({
-      storeId: DEMO_STORE_ID,
+      storeId,
       name,
       slug,
       description: null,
@@ -61,6 +63,7 @@ export async function updateBrandAction(input: {
   id: string;
   name: string;
 }) {
+  const storeId = await getActiveStoreIdOrThrow();
   const name = input.name.trim();
 
   if (!name) {
@@ -76,7 +79,7 @@ export async function updateBrandAction(input: {
       slug,
       updatedAt: new Date(),
     })
-    .where(and(eq(brands.id, input.id), eq(brands.storeId, DEMO_STORE_ID)))
+    .where(and(eq(brands.id, input.id), eq(brands.storeId, storeId)))
     .returning({
       id: brands.id,
       name: brands.name,
@@ -88,9 +91,10 @@ export async function updateBrandAction(input: {
 }
 
 export async function deleteBrandAction(input: { id: string }) {
+  const storeId = await getActiveStoreIdOrThrow();
   await db
     .delete(brands)
-    .where(and(eq(brands.id, input.id), eq(brands.storeId, DEMO_STORE_ID)));
+    .where(and(eq(brands.id, input.id), eq(brands.storeId, storeId)));
 
   revalidatePath("/products");
   return { success: true };

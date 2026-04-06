@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
 import { getProductById } from "@/features/products/queries/get-product-by-id";
-
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f";
 
 export async function GET(
   _request: Request,
@@ -9,10 +8,11 @@ export async function GET(
 ) {
   try {
     const { id } = await context.params;
+    const storeId = await getActiveStoreIdOrThrow();
 
     const product = await getProductById({
       id,
-      storeId: DEMO_STORE_ID,
+      storeId,
     });
 
     if (!product) {

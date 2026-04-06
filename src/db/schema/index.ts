@@ -1,5 +1,6 @@
 export * from "./stores";
 export * from "./profiles";
+export * from "./profile-store-access";
 export * from "./categories";
 export * from "./suppliers";
 export * from "./brands";

@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ProductsTable } from "@/features/products/components/products-table";
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
 import { getProducts } from "@/features/products/queries";
 
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f";
-
 export default async function ProductsPage() {
+  const storeId = await getActiveStoreIdOrThrow();
   const products = await getProducts({
-    storeId: DEMO_STORE_ID,
+    storeId,
   });
 
   return (

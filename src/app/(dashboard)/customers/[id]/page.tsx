@@ -1,11 +1,10 @@
 import { notFound } from "next/navigation";
 import { CustomerForm } from "@/features/customers/components/customer-form";
 import CustomerCreatedToast from "@/features/customers/components/customer-created-toast";
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
 import { updateCustomerAction } from "@/features/customers/actions/update-customer-action";
 import { getCustomerById } from "@/features/customers/queries/get-customer-by-id";
 import type { CustomerFormValues } from "@/features/customers/schemas/customer-form-schema";
-
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f";
 
 export default async function CustomerDetailPage({
   params,
@@ -13,7 +12,8 @@ export default async function CustomerDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const customer = await getCustomerById({ id, storeId: DEMO_STORE_ID });
+  const storeId = await getActiveStoreIdOrThrow();
+  const customer = await getCustomerById({ id, storeId });
 
   if (!customer) {
     notFound();

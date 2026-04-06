@@ -6,11 +6,11 @@ import {
   updateCategoryAction,
 } from "@/features/categories/actions/category-actions"
 import { getCategoriesByStore } from "@/features/categories/queries/get-categories-by-store"
-
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f"
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context"
 
 export default async function CategoriesPage() {
-  const categories = await getCategoriesByStore(DEMO_STORE_ID)
+  const storeId = await getActiveStoreIdOrThrow()
+  const categories = await getCategoriesByStore(storeId)
 
   return (
     <MasterDataManager

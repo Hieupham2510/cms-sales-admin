@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CustomersTable } from "@/features/customers/components/customers-table";
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
 import { getCustomers } from "@/features/customers/queries/get-customers";
 
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f";
-
 export default async function CustomersPage() {
-  const customers = await getCustomers({ storeId: DEMO_STORE_ID });
+  const storeId = await getActiveStoreIdOrThrow();
+  const customers = await getCustomers({ storeId });
 
   return (
     <div className="section-block space-y-6">

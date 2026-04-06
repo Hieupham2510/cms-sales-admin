@@ -11,6 +11,7 @@ import {
   salesOrderStatusLogs,
   salesOrders,
 } from "@/db/schema";
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
 import { createClient } from "@/lib/supabase/server";
 import {
   createSalesOrderSchema,
@@ -23,8 +24,6 @@ import {
   type SelectedVariant,
 } from "@/features/products/variant-utils";
 
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f";
-
 function numericToString(value: number) {
   return value.toFixed(2);
 }
@@ -34,6 +33,7 @@ function buildOrderCode(sequence: number) {
 }
 
 export async function createSalesOrderAction(input: CreateSalesOrderInput) {
+  const storeId = await getActiveStoreIdOrThrow();
   const parsed = createSalesOrderSchema.parse(input);
 
   const supabase = await createClient();
@@ -47,7 +47,7 @@ export async function createSalesOrderAction(input: CreateSalesOrderInput) {
         id: customers.id,
       })
       .from(customers)
-      .where(and(eq(customers.id, parsed.customerId), eq(customers.storeId, DEMO_STORE_ID)))
+      .where(and(eq(customers.id, parsed.customerId), eq(customers.storeId, storeId)))
       .limit(1);
 
     if (!customer) {
@@ -75,7 +75,7 @@ export async function createSalesOrderAction(input: CreateSalesOrderInput) {
         currentStock: products.currentStock,
       })
       .from(products)
-      .where(and(eq(products.storeId, DEMO_STORE_ID), inArray(products.id, productIds)));
+      .where(and(eq(products.storeId, storeId), inArray(products.id, productIds)));
 
     const productMap = new Map(productRows.map((row) => [row.id, row]));
 
@@ -125,7 +125,7 @@ export async function createSalesOrderAction(input: CreateSalesOrderInput) {
         .where(
           and(
             eq(products.id, productId),
-            eq(products.storeId, DEMO_STORE_ID),
+            eq(products.storeId, storeId),
             sql`${products.currentStock} >= ${requestedQuantity}`,
           ),
         )
@@ -208,14 +208,14 @@ export async function createSalesOrderAction(input: CreateSalesOrderInput) {
         count: sql<number>`count(*)::int`,
       })
       .from(salesOrders)
-      .where(eq(salesOrders.storeId, DEMO_STORE_ID));
+      .where(eq(salesOrders.storeId, storeId));
 
     const orderCode = buildOrderCode((orderCountRow?.count ?? 0) + 1);
 
     const [createdOrder] = await tx
       .insert(salesOrders)
       .values({
-        storeId: DEMO_STORE_ID,
+        storeId,
         orderCode,
         customerId: parsed.customerId,
         status: "processing",
@@ -265,7 +265,7 @@ export async function createSalesOrderAction(input: CreateSalesOrderInput) {
         const product = productMap.get(item.productId)!;
 
         return {
-          storeId: DEMO_STORE_ID,
+          storeId,
           productId: item.productId,
           type: "export",
           quantity: -item.quantity,

@@ -9,10 +9,10 @@ import {
   inventoryTransactions,
   products,
 } from "@/db/schema";
-
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f";
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
 
 export async function cancelInventoryCheckAction(checkId: string) {
+  const storeId = await getActiveStoreIdOrThrow();
   const checkRows = await db
     .select({
       checkId: inventoryChecks.id,
@@ -24,7 +24,7 @@ export async function cancelInventoryCheckAction(checkId: string) {
     })
     .from(inventoryChecks)
     .innerJoin(inventoryCheckItems, eq(inventoryChecks.id, inventoryCheckItems.checkId))
-    .where(and(eq(inventoryChecks.id, checkId), eq(inventoryChecks.storeId, DEMO_STORE_ID)))
+    .where(and(eq(inventoryChecks.id, checkId), eq(inventoryChecks.storeId, storeId)))
     .limit(1);
 
   const check = checkRows[0];
@@ -41,7 +41,7 @@ export async function cancelInventoryCheckAction(checkId: string) {
     .innerJoin(inventoryCheckItems, eq(inventoryChecks.id, inventoryCheckItems.checkId))
     .where(
       and(
-        eq(inventoryChecks.storeId, DEMO_STORE_ID),
+        eq(inventoryChecks.storeId, storeId),
         eq(inventoryCheckItems.productId, check.productId),
       ),
     )
@@ -59,13 +59,13 @@ export async function cancelInventoryCheckAction(checkId: string) {
         currentStock: check.bookStock,
         updatedAt: new Date(),
       })
-      .where(and(eq(products.id, check.productId), eq(products.storeId, DEMO_STORE_ID)));
+      .where(and(eq(products.id, check.productId), eq(products.storeId, storeId)));
 
     await tx
       .delete(inventoryTransactions)
       .where(
         and(
-          eq(inventoryTransactions.storeId, DEMO_STORE_ID),
+          eq(inventoryTransactions.storeId, storeId),
           eq(inventoryTransactions.referenceType, "inventory_check"),
           eq(inventoryTransactions.referenceId, check.checkId),
         ),

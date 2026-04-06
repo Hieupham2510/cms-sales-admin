@@ -6,11 +6,11 @@ import {
   updateBrandAction,
 } from "@/features/brands/actions/brand-actions"
 import { getBrandsByStore } from "@/features/brands/queries/get-brands-by-store"
-
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f"
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context"
 
 export default async function BrandsPage() {
-  const brands = await getBrandsByStore(DEMO_STORE_ID)
+  const storeId = await getActiveStoreIdOrThrow()
+  const brands = await getBrandsByStore(storeId)
 
   return (
     <MasterDataManager

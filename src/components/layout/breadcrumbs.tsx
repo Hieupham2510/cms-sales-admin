@@ -18,6 +18,7 @@ const LABEL_MAP: Record<string, string> = {
   adjustments: "Phiếu kiểm kho",
   transactions: "Lịch sử kho",
   settings: "Cài đặt",
+  "staff-home": "Trang nhân viên",
   login: "Đăng nhập",
   new: "Tạo mới",
 }
@@ -116,6 +117,7 @@ export function Breadcrumbs() {
         <li>
           <Link
             href="/dashboard"
+            prefetch={false}
             className={
               pathname === "/dashboard"
                 ? "font-semibold text-primary"
@@ -132,6 +134,7 @@ export function Breadcrumbs() {
             <span>/</span>
             <Link
               href={crumb.href}
+              prefetch={false}
               className={`max-w-[180px] truncate md:max-w-none ${
                 isCurrent
                   ? "font-semibold text-primary"

@@ -2,11 +2,10 @@ import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
 import CancelInventoryCheckButton from "@/features/inventory-checks/components/cancel-inventory-check-button";
 import { getInventoryCheckById } from "@/features/inventory-checks/queries/get-inventory-check-by-id";
 import { getInventoryChecksByStore } from "@/features/inventory-checks/queries/get-inventory-checks-by-store";
-
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f";
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("vi-VN", {
@@ -25,10 +24,11 @@ function formatCurrency(value: string) {
 }
 
 export default async function InventoryAdjustmentsPage() {
-  const checks = await getInventoryChecksByStore(DEMO_STORE_ID);
+  const storeId = await getActiveStoreIdOrThrow();
+  const checks = await getInventoryChecksByStore(storeId);
   const detailedChecks = await Promise.all(
     checks.map((check) =>
-      getInventoryCheckById({ id: check.id, storeId: DEMO_STORE_ID }),
+      getInventoryCheckById({ id: check.id, storeId }),
     ),
   );
   const detailedCheckMap = new Map(

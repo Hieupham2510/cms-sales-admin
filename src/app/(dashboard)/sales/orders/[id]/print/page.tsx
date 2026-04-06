@@ -1,10 +1,9 @@
 import { notFound } from "next/navigation";
 import { AutoPrint } from "@/features/sales/components/auto-print";
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
 import { variantSummary } from "@/features/products/variant-utils";
 import { getSalesOrderById } from "@/features/sales/queries/get-sales-order-by-id";
 import { formatCurrency, formatDateTime } from "@/features/sales/utils";
-
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f";
 
 export default async function SalesOrderPrintPage({
   params,
@@ -12,7 +11,8 @@ export default async function SalesOrderPrintPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const order = await getSalesOrderById({ id, storeId: DEMO_STORE_ID });
+  const storeId = await getActiveStoreIdOrThrow();
+  const order = await getSalesOrderById({ id, storeId });
 
   if (!order) {
     notFound();

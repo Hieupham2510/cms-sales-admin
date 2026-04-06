@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
 import { SalesOrdersTable } from "@/features/sales/components/sales-orders-table";
 import { getSalesOrders } from "@/features/sales/queries/get-sales-orders";
-
-const DEMO_STORE_ID = "03c8870e-a39e-4403-99f9-c14807a2cc7f";
 
 const statusFilters = [
   { value: "all", label: "Tất cả" },
@@ -19,6 +18,7 @@ export default async function SalesOrdersPage({
   searchParams: Promise<{ status?: string }>;
 }) {
   const params = await searchParams;
+  const storeId = await getActiveStoreIdOrThrow();
   const status =
     params.status &&
     ["processing", "completed", "failed_delivery", "cancelled", "all"].includes(
@@ -33,7 +33,7 @@ export default async function SalesOrdersPage({
       : "all";
 
   const orders = await getSalesOrders({
-    storeId: DEMO_STORE_ID,
+    storeId,
     status,
   });
 
