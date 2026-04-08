@@ -1,7 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { TablePagination } from "@/components/shared/table-pagination";
+import { TABLE_PAGE_SIZE } from "@/lib/constants";
 import {
   formatCurrency,
   formatDateTime,
@@ -29,6 +32,14 @@ type Props = {
 
 export function SalesOrdersTable({ data }: Props) {
   const router = useRouter();
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(data.length / TABLE_PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+
+  const pageData = useMemo(() => {
+    const start = (currentPage - 1) * TABLE_PAGE_SIZE;
+    return data.slice(start, start + TABLE_PAGE_SIZE);
+  }, [currentPage, data]);
 
   return (
     <div className="table-shell">
@@ -46,7 +57,7 @@ export function SalesOrdersTable({ data }: Props) {
             </tr>
           </thead>
           <tbody>
-            {data.map((item) => (
+            {pageData.map((item) => (
               <tr
                 key={item.id}
                 className="cursor-pointer border-b hover:bg-muted/20"
@@ -79,7 +90,7 @@ export function SalesOrdersTable({ data }: Props) {
               </tr>
             ))}
 
-            {data.length === 0 ? (
+            {pageData.length === 0 ? (
               <tr>
                 <td colSpan={7} className="h-24 text-center text-muted-foreground">
                   Chưa có đơn bán nào.
@@ -89,6 +100,12 @@ export function SalesOrdersTable({ data }: Props) {
           </tbody>
         </table>
       </div>
+      <TablePagination
+        page={currentPage}
+        totalItems={data.length}
+        pageSize={TABLE_PAGE_SIZE}
+        onPageChange={setPage}
+      />
     </div>
   );
 }

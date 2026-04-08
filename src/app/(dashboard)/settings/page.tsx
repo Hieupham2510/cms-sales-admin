@@ -4,6 +4,7 @@ import { UserAccountsManager } from "@/features/auth/components/user-accounts-ma
 import { getAuthContext } from "@/features/auth/queries/get-auth-context"
 import { getManageableStores } from "@/features/auth/queries/get-manageable-stores"
 import { getUserAccounts } from "@/features/auth/queries/get-user-accounts"
+import { StoresManager } from "@/features/stores/components/stores-manager"
 import { redirect } from "next/navigation"
 
 export default async function SettingsPage() {
@@ -62,6 +63,7 @@ export default async function SettingsPage() {
   return (
     <div className="section-block space-y-6">
       <PageHeader title="Cài đặt" description="Thiết lập cấu hình hệ thống bán hàng." />
+      {auth.role === "admin" ? <StoresManager stores={stores} /> : null}
       <UserAccountsManager
         actorRole={auth.role}
         currentStoreId={auth.activeStoreId}

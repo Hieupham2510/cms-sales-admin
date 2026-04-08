@@ -7,11 +7,12 @@ export default async function StaffHomePage() {
   if (!auth) {
     redirect("/login");
   }
+  const activeStore = auth.allowedStores.find((store) => store.id === auth.activeStoreId) ?? null;
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center rounded-xl border bg-card">
       <div className="space-y-3 text-center">
-        <MaiLinhLogo />
+        <MaiLinhLogo storeName={activeStore?.name ?? null} logoUrl={activeStore?.logoUrl ?? null} />
         <p className="text-sm text-muted-foreground">
           Xin chào {auth.fullName ?? auth.username}
         </p>

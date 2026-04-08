@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { categories } from "@/db/schema";
-import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
+import { getActiveStoreIdOrThrow, requireAdminContext } from "@/features/auth/queries/get-auth-context";
 import { and, asc, eq } from "drizzle-orm";
 
 function slugify(value: string) {
@@ -93,7 +93,11 @@ export async function updateCategoryAction(input: {
 }
 
 export async function deleteCategoryAction(input: { id: string }) {
-  const storeId = await getActiveStoreIdOrThrow();
+  const auth = await requireAdminContext();
+  const storeId = auth.activeStoreId;
+  if (!storeId) {
+    throw new Error("Tài khoản chưa được gán cửa hàng");
+  }
   await db
     .delete(categories)
     .where(

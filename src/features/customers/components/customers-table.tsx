@@ -1,15 +1,18 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { History, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { TablePagination } from "@/components/shared/table-pagination";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { variantSummary, type SelectedVariant } from "@/features/products/variant-utils";
 import { deleteCustomerAction } from "@/features/customers/actions/delete-customer-action";
+import type { AppRole } from "@/features/auth/types";
+import { TABLE_PAGE_SIZE } from "@/lib/constants";
 import {
   formatCurrency,
   formatDateTime,
@@ -31,6 +34,7 @@ type CustomerRow = {
 
 type Props = {
   data: CustomerRow[];
+  role: AppRole;
 };
 
 type PurchaseHistoryItem = {
@@ -69,13 +73,21 @@ function formatDate(value: Date) {
   }).format(new Date(value));
 }
 
-export function CustomersTable({ data }: Props) {
+export function CustomersTable({ data, role }: Props) {
   const router = useRouter();
   const [deletingCustomer, setDeletingCustomer] = useState<CustomerRow | null>(null);
   const [historyCustomer, setHistoryCustomer] = useState<CustomerRow | null>(null);
   const [historyOrders, setHistoryOrders] = useState<PurchaseHistoryOrder[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(data.length / TABLE_PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+
+  const pageData = useMemo(() => {
+    const start = (currentPage - 1) * TABLE_PAGE_SIZE;
+    return data.slice(start, start + TABLE_PAGE_SIZE);
+  }, [currentPage, data]);
 
   const handleDeleteCustomer = () => {
     if (!deletingCustomer) return;
@@ -152,7 +164,7 @@ export function CustomersTable({ data }: Props) {
             </tr>
           </thead>
           <tbody>
-            {data.map((item) => (
+            {pageData.map((item) => (
               <tr
                 key={item.id}
                 className="cursor-pointer border-b hover:bg-muted/20"
@@ -190,23 +202,25 @@ export function CustomersTable({ data }: Props) {
                     >
                       <History className="h-4 w-4" />
                     </Button>
-                    <Button
-                      type="button"
-                      size="icon-sm"
-                      variant="ghost"
-                      className="text-muted-foreground hover:text-destructive"
-                      onClick={() => setDeletingCustomer(item)}
-                      aria-label={`Xóa khách hàng ${item.name}`}
-                      title="Xóa khách hàng"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {role === "admin" ? (
+                      <Button
+                        type="button"
+                        size="icon-sm"
+                        variant="ghost"
+                        className="text-muted-foreground hover:text-destructive"
+                        onClick={() => setDeletingCustomer(item)}
+                        aria-label={`Xóa khách hàng ${item.name}`}
+                        title="Xóa khách hàng"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    ) : null}
                   </div>
                 </td>
               </tr>
             ))}
 
-            {data.length === 0 ? (
+            {pageData.length === 0 ? (
               <tr>
                 <td
                   colSpan={8}
@@ -219,6 +233,12 @@ export function CustomersTable({ data }: Props) {
           </tbody>
         </table>
       </div>
+      <TablePagination
+        page={currentPage}
+        totalItems={data.length}
+        pageSize={TABLE_PAGE_SIZE}
+        onPageChange={setPage}
+      />
 
       <Dialog
         open={Boolean(deletingCustomer)}

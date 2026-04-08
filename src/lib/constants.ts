@@ -10,7 +10,8 @@ import {
   Users,
 } from "lucide-react"
 
-export const APP_NAME = "Áo dài Mai Linh"
+export const APP_NAME = "CMS Sales Admin"
+export const TABLE_PAGE_SIZE = 20
 
 export interface DashboardNavItem {
   label: string

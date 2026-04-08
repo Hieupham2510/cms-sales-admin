@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { locations } from "@/db/schema";
-import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
+import { getActiveStoreIdOrThrow, requireAdminContext } from "@/features/auth/queries/get-auth-context";
 import { and, asc, eq } from "drizzle-orm";
 
 export async function listLocationsAction() {
@@ -91,7 +91,11 @@ export async function updateLocationAction(input: {
 }
 
 export async function deleteLocationAction(input: { id: string }) {
-  const storeId = await getActiveStoreIdOrThrow();
+  const auth = await requireAdminContext();
+  const storeId = auth.activeStoreId;
+  if (!storeId) {
+    throw new Error("Tài khoản chưa được gán cửa hàng");
+  }
   await db
     .delete(locations)
     .where(

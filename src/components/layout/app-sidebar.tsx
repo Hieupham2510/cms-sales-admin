@@ -9,9 +9,11 @@ import { cn } from "@/lib/utils"
 
 type Props = {
   role: "admin" | "manager" | "staff"
+  storeName?: string | null
+  storeLogoUrl?: string | null
 }
 
-export function AppSidebar({ role }: Props) {
+export function AppSidebar({ role, storeName, storeLogoUrl }: Props) {
   const pathname = usePathname()
   const navGroups = getDashboardNavGroupsByRole(role)
   const navItems = navGroups.flatMap((group) => group.items)
@@ -28,7 +30,7 @@ export function AppSidebar({ role }: Props) {
   return (
     <aside className="hidden h-screen w-[272px] shrink-0 border-r border-sidebar-border bg-sidebar lg:flex lg:flex-col">
       <div className="border-b border-sidebar-border px-5 py-4">
-        <MaiLinhLogo compact />
+        <MaiLinhLogo compact storeName={storeName} logoUrl={storeLogoUrl} />
       </div>
 
       <nav className="flex-1 space-y-4 overflow-y-auto p-3">
@@ -47,7 +49,7 @@ export function AppSidebar({ role }: Props) {
                   href={item.href}
                   prefetch={false}
                   className={cn(
-                    "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    "flex items-center gap-2.5 rounded-sm px-3 py-2 text-sm font-medium transition-colors",
                     isActive
                       ? "bg-sidebar-primary text-sidebar-primary-foreground"
                       : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"

@@ -12,12 +12,22 @@ export default async function DashboardLayout({
   if (!auth) {
     redirect("/login");
   }
+  const activeStore =
+    auth.allowedStores.find((store) => store.id === auth.activeStoreId) ?? null;
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
-      <AppSidebar role={auth.role} />
+      <AppSidebar
+        role={auth.role}
+        storeName={activeStore?.name ?? null}
+        storeLogoUrl={activeStore?.logoUrl ?? null}
+      />
       <div className="flex min-w-0 flex-1 flex-col">
-        <DashboardHeader auth={auth} />
+        <DashboardHeader
+          auth={auth}
+          activeStoreName={activeStore?.name ?? null}
+          activeStoreLogoUrl={activeStore?.logoUrl ?? null}
+        />
         <main className="page-container flex-1">{children}</main>
       </div>
     </div>

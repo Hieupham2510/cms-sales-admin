@@ -9,7 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { TablePagination } from "@/components/shared/table-pagination"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import type { AppRole } from "@/features/auth/types"
+import { TABLE_PAGE_SIZE } from "@/lib/constants"
 
 type Item = {
   id: string
@@ -17,6 +20,7 @@ type Item = {
 }
 
 type Props = {
+  role: AppRole
   title: string
   description: string
   entityLabel: string
@@ -32,6 +36,7 @@ function sortByName(items: Item[]) {
 }
 
 export function MasterDataManager({
+  role,
   title,
   description,
   entityLabel,
@@ -47,6 +52,14 @@ export function MasterDataManager({
   const [name, setName] = useState("")
   const [editingId, setEditingId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [page, setPage] = useState(1)
+  const totalPages = Math.max(1, Math.ceil(items.length / TABLE_PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+
+  const pageItems = useMemo(() => {
+    const start = (currentPage - 1) * TABLE_PAGE_SIZE
+    return items.slice(start, start + TABLE_PAGE_SIZE)
+  }, [currentPage, items])
 
   const dialogTitle = useMemo(
     () => (editingId ? `Sửa ${entityLabel}` : `Thêm ${entityLabel}`),
@@ -161,29 +174,33 @@ export function MasterDataManager({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((item, index) => (
+              {pageItems.map((item, index) => (
                 <TableRow key={item.id}>
-                  <TableCell className="text-muted-foreground">{index + 1}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {(currentPage - 1) * TABLE_PAGE_SIZE + index + 1}
+                  </TableCell>
                   <TableCell className="font-medium">{item.name}</TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-2">
                       <Button type="button" size="icon-sm" variant="ghost" onClick={() => openEditDialog(item)}>
                         <Pencil className="size-4" />
                       </Button>
-                      <Button
-                        type="button"
-                        size="icon-sm"
-                        variant="ghost"
-                        onClick={() => setDeletingItem(item)}
-                      >
-                        <Trash2 className="size-4 text-destructive" />
-                      </Button>
+                      {role === "admin" ? (
+                        <Button
+                          type="button"
+                          size="icon-sm"
+                          variant="ghost"
+                          onClick={() => setDeletingItem(item)}
+                        >
+                          <Trash2 className="size-4 text-destructive" />
+                        </Button>
+                      ) : null}
                     </div>
                   </TableCell>
                 </TableRow>
               ))}
 
-              {items.length === 0 ? (
+              {pageItems.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={3} className="py-8 text-center text-muted-foreground">
                     Chưa có dữ liệu.
@@ -192,6 +209,12 @@ export function MasterDataManager({
               ) : null}
             </TableBody>
           </Table>
+          <TablePagination
+            page={currentPage}
+            totalItems={items.length}
+            pageSize={TABLE_PAGE_SIZE}
+            onPageChange={setPage}
+          />
         </CardContent>
       </Card>
 

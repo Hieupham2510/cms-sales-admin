@@ -1,25 +1,18 @@
-import { ArrowDownRight, ArrowUpRight, Clock3, PackageCheck, RotateCcw, ShoppingBag, Users } from "lucide-react"
+import Link from "next/link"
+import { ArrowDownRight, ArrowUpRight, CircleHelp, RotateCcw, ShoppingBag } from "lucide-react"
 
 import { MaiLinhLogo } from "@/components/brand/mai-linh-logo"
+import { RevenueTrendBarChart } from "@/components/dashboard/revenue-trend-bar-chart"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
 import {
-  dashboardMockData,
-  type ActivityFeedItem,
-  type RevenueTrendPoint,
-  type TopCustomer,
-  type TopSellingProduct,
-  type TrendView,
-} from "@/lib/dashboard-mock"
+  type DashboardData,
+  type DashboardTopCustomer,
+  type DashboardTopProduct,
+} from "@/features/dashboard/queries/get-sales-dashboard-data"
 import { cn } from "@/lib/utils"
-
-const trendTabs: { value: TrendView; label: string }[] = [
-  { value: "daily", label: "Theo ngày" },
-  { value: "hourly", label: "Theo giờ" },
-  { value: "weekday", label: "Theo thứ" },
-]
 
 const currencyFormatter = new Intl.NumberFormat("vi-VN", {
   style: "currency",
@@ -33,6 +26,14 @@ const compactCurrencyFormatter = new Intl.NumberFormat("vi-VN", {
   maximumFractionDigits: 1,
 })
 
+const dateTimeFormatter = new Intl.DateTimeFormat("vi-VN", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+})
+
 function formatCurrency(value: number) {
   return currencyFormatter.format(value)
 }
@@ -42,71 +43,37 @@ function formatCompactCurrency(value: number) {
 }
 
 function formatPercentDelta(currentValue: number, previousValue: number) {
-  if (previousValue === 0) return 0
-  return ((currentValue - previousValue) / previousValue) * 100
-}
-
-function getYAxisTicks(points: RevenueTrendPoint[]) {
-  const maxValue = Math.max(...points.map((point) => point.netRevenue))
-  const roundedMax = Math.ceil(maxValue / 10000000) * 10000000
-  return Array.from({ length: 5 }, (_, index) => {
-    const step = roundedMax / 4
-    return roundedMax - step * index
-  })
-}
-
-function formatTickValue(value: number) {
-  const millions = value / 1000000
-  return millions >= 1000 ? `${(millions / 1000).toFixed(1)} tỷ` : `${Math.round(millions)} tr`
-}
-
-function getActivityMeta(item: ActivityFeedItem) {
-  switch (item.actionType) {
-    case "sale_created":
-      return {
-        icon: ShoppingBag,
-        surfaceClassName: "bg-accent text-accent-foreground",
-        accentClassName: "text-primary",
-      }
-    case "return_created":
-      return {
-        icon: RotateCcw,
-        surfaceClassName: "bg-[hsl(var(--destructive)/0.12)] text-destructive",
-        accentClassName: "text-destructive",
-      }
-    case "inventory_received":
-      return {
-        icon: PackageCheck,
-        surfaceClassName: "bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))]",
-        accentClassName: "text-[hsl(var(--success))]",
-      }
-    case "customer_created":
-      return {
-        icon: Users,
-        surfaceClassName: "bg-[hsl(var(--info)/0.12)] text-[hsl(var(--info))]",
-        accentClassName: "text-[hsl(var(--info))]",
-      }
+  if (previousValue === 0) {
+    return currentValue > 0 ? 100 : 0
   }
+  return ((currentValue - previousValue) / previousValue) * 100
 }
 
 function SalesMetricCard({
   title,
   value,
   detail,
+  formula,
   icon: Icon,
   tone = "neutral",
 }: {
   title: string
   value: string
   detail: string
+  formula: string
   icon: typeof ShoppingBag
   tone?: "neutral" | "destructive"
 }) {
   return (
     <div className="grid gap-3 rounded-xl border border-border bg-card p-4">
       <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="metric-label">{title}</p>
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5">
+            <p className="metric-label">{title}</p>
+            <span title={formula} className="inline-flex cursor-help items-center text-muted-foreground">
+              <CircleHelp className="size-3.5" />
+            </span>
+          </div>
           <p className="metric-value text-[1.6rem]">{value}</p>
         </div>
         <div
@@ -114,7 +81,7 @@ function SalesMetricCard({
             "flex h-11 w-11 items-center justify-center rounded-xl",
             tone === "destructive"
               ? "bg-[hsl(var(--destructive)/0.12)] text-destructive"
-              : "bg-accent text-accent-foreground"
+              : "bg-accent text-accent-foreground",
           )}
         >
           <Icon className="size-5" />
@@ -129,10 +96,14 @@ function RevenueComparisonCard({
   title,
   percentage,
   detail,
+  formula,
+  note,
 }: {
   title: string
   percentage: number
   detail: string
+  formula: string
+  note: string
 }) {
   const isPositive = percentage >= 0
   const Icon = isPositive ? ArrowUpRight : ArrowDownRight
@@ -140,8 +111,13 @@ function RevenueComparisonCard({
   return (
     <div className="grid gap-3 rounded-xl border border-border bg-card p-4">
       <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="metric-label">{title}</p>
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5">
+            <p className="metric-label">{title}</p>
+            <span title={formula} className="inline-flex cursor-help items-center text-muted-foreground">
+              <CircleHelp className="size-3.5" />
+            </span>
+          </div>
           <p className="metric-value text-[1.6rem]">{`${isPositive ? "+" : ""}${percentage.toFixed(2)}%`}</p>
         </div>
         <div
@@ -149,56 +125,14 @@ function RevenueComparisonCard({
             "flex h-11 w-11 items-center justify-center rounded-xl",
             isPositive
               ? "bg-[hsl(var(--success)/0.12)] text-[hsl(var(--success))]"
-              : "bg-[hsl(var(--destructive)/0.12)] text-destructive"
+              : "bg-[hsl(var(--destructive)/0.12)] text-destructive",
           )}
         >
           <Icon className="size-5" />
         </div>
       </div>
       <p className="text-xs text-muted-foreground">{detail}</p>
-    </div>
-  )
-}
-
-function RevenueBarsChart({ points }: { points: RevenueTrendPoint[] }) {
-  const maxValue = Math.max(...points.map((point) => point.netRevenue))
-  const yAxisTicks = getYAxisTicks(points)
-
-  return (
-    <div className="grid gap-4">
-      <div className="grid grid-cols-[3rem_minmax(0,1fr)] gap-3">
-        <div className="grid h-[20rem] content-between pt-2 text-xs text-muted-foreground">
-          {yAxisTicks.map((tick) => (
-            <span key={tick} className="text-right tabular">
-              {formatTickValue(tick)}
-            </span>
-          ))}
-          <span className="text-right tabular">0</span>
-        </div>
-
-        <div className="relative h-[20rem]">
-          <div className="pointer-events-none absolute inset-0 grid grid-rows-5">
-            {yAxisTicks.map((tick) => (
-              <div key={tick} className="border-t border-dashed border-border" />
-            ))}
-          </div>
-
-          <div className="absolute inset-x-0 bottom-0 top-2 flex items-end gap-2">
-            {points.map((point) => (
-              <div key={point.bucketKey} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-2">
-                <div className="group relative flex h-full w-full items-end justify-center">
-                  <div
-                    className="w-full max-w-7 rounded-t-md bg-primary/90 transition-colors group-hover:bg-primary"
-                    style={{ height: `${Math.max((point.netRevenue / maxValue) * 100, 6)}%` }}
-                    title={`${point.label}: ${formatCurrency(point.netRevenue)}`}
-                  />
-                </div>
-                <span className="text-xs text-muted-foreground">{point.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <p className="text-xs text-muted-foreground">{note}</p>
     </div>
   )
 }
@@ -207,9 +141,17 @@ function TopBarList({
   items,
   type,
 }: {
-  items: TopSellingProduct[] | TopCustomer[]
+  items: DashboardTopProduct[] | DashboardTopCustomer[]
   type: "products" | "customers"
 }) {
+  if (items.length === 0) {
+    return (
+      <div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
+        Không có dữ liệu trong khoảng thời gian đã chọn.
+      </div>
+    )
+  }
+
   const maxValue = Math.max(...items.map((item) => item.netRevenue))
 
   return (
@@ -217,17 +159,22 @@ function TopBarList({
       {items.map((item, index) => {
         const isProduct = type === "products"
         const entryKey = isProduct
-          ? (item as TopSellingProduct).productId
-          : (item as TopCustomer).customerId
+          ? `${(item as DashboardTopProduct).productId}:${(item as DashboardTopProduct).variantName}`
+          : (item as DashboardTopCustomer).customerId
+
+        const href = isProduct
+          ? `/products?search=${encodeURIComponent((item as DashboardTopProduct).sku)}`
+          : `/customers?search=${encodeURIComponent((item as DashboardTopCustomer).customerCode)}`
+
         const label = isProduct
-          ? `${(item as TopSellingProduct).productName} - ${(item as TopSellingProduct).variantName}`
-          : `${(item as TopCustomer).fullName} - ${(item as TopCustomer).location}`
+          ? `${(item as DashboardTopProduct).productName} - ${(item as DashboardTopProduct).variantName}`
+          : (item as DashboardTopCustomer).fullName
         const meta = isProduct
-          ? `${(item as TopSellingProduct).sku} • ${(item as TopSellingProduct).quantitySold} sản phẩm`
-          : `${(item as TopCustomer).customerCode} • ${(item as TopCustomer).orderCount} đơn hàng`
+          ? `${(item as DashboardTopProduct).sku} • ${(item as DashboardTopProduct).quantitySold} sản phẩm`
+          : `${(item as DashboardTopCustomer).customerCode} • ${(item as DashboardTopCustomer).orderCount} đơn hàng`
 
         return (
-          <div key={entryKey} className="space-y-2">
+          <Link key={entryKey} href={href} className="block space-y-2 rounded-lg p-1 transition-colors hover:bg-muted/50">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground">
@@ -241,151 +188,145 @@ function TopBarList({
             <div className="h-2 rounded-full bg-muted">
               <div
                 className="h-2 rounded-full bg-primary"
-                style={{ width: `${Math.max((item.netRevenue / maxValue) * 100, 8)}%` }}
+                style={{ width: `${maxValue > 0 ? Math.max((item.netRevenue / maxValue) * 100, 8) : 0}%` }}
               />
             </div>
-          </div>
+          </Link>
         )
       })}
     </div>
   )
 }
 
-function ActivityFeed({ items }: { items: ActivityFeedItem[] }) {
-  return (
-    <div className="space-y-5">
-      {items.map((item, index) => {
-        const { icon: Icon, surfaceClassName, accentClassName } = getActivityMeta(item)
-
-        return (
-          <div key={item.id} className="relative flex gap-3">
-            {index !== items.length - 1 ? (
-              <span className="absolute left-[1.15rem] top-12 h-[calc(100%-2rem)] w-px bg-border" />
-            ) : null}
-            <div className={cn("relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full", surfaceClassName)}>
-              <Icon className="size-4" />
-            </div>
-            <div className="min-w-0 space-y-1">
-              <p className="text-sm leading-6 text-foreground">
-                <span className={cn("font-semibold", accentClassName)}>{item.actorName}</span> {item.description}
-              </p>
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <span>{item.entityCode}</span>
-                <span className="h-1 w-1 rounded-full bg-border" />
-                <span>{item.branchName}</span>
-              </div>
-              {item.amount > 0 ? <p className="text-sm font-semibold tabular">{formatCurrency(item.amount)}</p> : null}
-              <p className="text-xs text-muted-foreground">{item.relativeTimeLabel}</p>
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
+type SalesDashboardProps = {
+  storeName?: string | null
+  storeLogoUrl?: string | null
+  data: DashboardData
 }
 
-export function SalesDashboard() {
-  const { overview, revenueTrend, topProducts, topCustomers, activityFeed } = dashboardMockData
-  const netRevenueVsYesterday = formatPercentDelta(overview.netRevenue, overview.netRevenueYesterday)
-  const netRevenueVsLastMonth = formatPercentDelta(overview.netRevenue, overview.netRevenueSameDayLastMonth)
+export function SalesDashboard({ storeName, storeLogoUrl, data }: SalesDashboardProps) {
+  const { overview, revenueTrend, topProducts, topCustomers, dateRange, isSingleDayRange } = data
+  const netRevenueVsYesterday = formatPercentDelta(
+    overview.netRevenueCurrentDay,
+    overview.netRevenueYesterday,
+  )
+  const netRevenueVsLastMonth = formatPercentDelta(
+    overview.netRevenueCurrentDay,
+    overview.netRevenueSameDayLastMonth,
+  )
+
+  const rangeLabel = isSingleDayRange
+    ? formatYmdDateForDisplay(dateRange.from)
+    : `${formatYmdDateForDisplay(dateRange.from)} - ${formatYmdDateForDisplay(dateRange.to)}`
+  const filterNote = `Dữ liệu lọc từ ${formatYmdDateForDisplay(dateRange.from)} đến ${formatYmdDateForDisplay(dateRange.to)}`
+  const yesterdayNote = `Mốc so sánh: ${formatYmdDateForDisplay(overview.comparisonDate)} và ${formatYmdDateForDisplay(overview.comparisonYesterdayDate)}`
+  const sameDayLastMonthNote = `Mốc so sánh: ${formatYmdDateForDisplay(overview.comparisonDate)} và ${formatYmdDateForDisplay(overview.comparisonSameDayLastMonthDate)}`
 
   return (
     <div className="section-block">
       <div className="page-header rounded-xl border border-border bg-card px-5 py-4 shadow-sm">
         <div className="space-y-3">
-          <MaiLinhLogo />
+          <MaiLinhLogo storeName={storeName} logoUrl={storeLogoUrl} />
           <div>
             <h1 className="page-title">Tổng quan bán hàng</h1>
             <p className="page-description">
-              Theo dõi doanh thu, sản phẩm chủ lực và nhịp vận hành của Áo dài Mai Linh trong ngày.
+              Theo dõi doanh thu, sản phẩm chủ lực và nhịp vận hành của {storeName ?? "cửa hàng"}.
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline" className="h-7 rounded-full px-3 text-xs">
-            {overview.branchName}
+            {rangeLabel}
           </Badge>
-          <Button variant="outline" size="sm">
-            {overview.snapshotDate}
-          </Button>
+          <form method="get" className="flex flex-wrap items-center gap-2">
+            <Input
+              type="date"
+              name="from"
+              defaultValue={dateRange.from}
+              className="h-8 w-36"
+              aria-label="Từ ngày"
+            />
+            <Input
+              type="date"
+              name="to"
+              defaultValue={dateRange.to}
+              className="h-8 w-36"
+              aria-label="Đến ngày"
+            />
+            <Button type="submit" variant="outline" size="sm">
+              Áp dụng
+            </Button>
+          </form>
         </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="grid gap-4">
         <div className="space-y-4">
           <Card className="app-card">
             <CardHeader className="border-b">
-              <CardTitle className="section-title">Kết quả bán hàng hôm nay</CardTitle>
+              <CardTitle className="section-title">Kết quả bán hàng</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 p-4 md:grid-cols-2 2xl:grid-cols-4">
               <SalesMetricCard
                 title="Doanh thu"
                 value={formatCurrency(overview.grossRevenue)}
                 detail={`${overview.grossOrderCount} hóa đơn thành công`}
+                formula="Doanh thu = tổng giá trị tất cả đơn hàng ở trạng thái Hoàn thành"
                 icon={ShoppingBag}
               />
               <SalesMetricCard
                 title="Trả hàng"
                 value={formatCurrency(overview.returnValue)}
-                detail={`${overview.returnOrderCount} giao dịch trả hàng`}
+                detail={`${overview.returnOrderCount} đơn không giao được / đã hủy`}
+                formula="Trả hàng = tổng giá trị các đơn ở trạng thái Không giao được hoặc Đã hủy"
                 icon={RotateCcw}
                 tone="destructive"
               />
               <RevenueComparisonCard
-                title="Doanh thu thuần"
+                title="Doanh thu thuần so với hôm qua"
                 percentage={netRevenueVsYesterday}
-                detail={`So với hôm qua: ${formatCurrency(overview.netRevenueYesterday)}`}
+                detail={`Doanh thu thuần ngày ${formatYmdDateForDisplay(overview.comparisonDate)}: ${formatCurrency(overview.netRevenueCurrentDay)}; ngày ${formatYmdDateForDisplay(overview.comparisonYesterdayDate)}: ${formatCurrency(overview.netRevenueYesterday)}`}
+                formula="% thay đổi = (Doanh thu thuần hiện tại - Doanh thu thuần hôm qua) / Doanh thu thuần hôm qua × 100%"
+                note={yesterdayNote}
               />
               <RevenueComparisonCard
-                title="Doanh thu thuần"
+                title="Doanh thu thuần so với cùng kỳ tháng trước"
                 percentage={netRevenueVsLastMonth}
-                detail={`So với cùng kỳ tháng trước: ${formatCurrency(overview.netRevenueSameDayLastMonth)}`}
+                detail={`Doanh thu thuần ngày ${formatYmdDateForDisplay(overview.comparisonDate)}: ${formatCurrency(overview.netRevenueCurrentDay)}; ngày ${formatYmdDateForDisplay(overview.comparisonSameDayLastMonthDate)}: ${formatCurrency(overview.netRevenueSameDayLastMonth)}`}
+                formula="% tăng trưởng = (Doanh thu thuần ngày hiện tại - Doanh thu thuần cùng ngày tháng trước) / Doanh thu thuần cùng ngày tháng trước × 100%"
+                note={sameDayLastMonthNote}
               />
             </CardContent>
+            <div className="px-4 pb-4">
+              <p className="text-xs text-muted-foreground">{filterNote}</p>
+            </div>
           </Card>
 
           <Card className="app-card">
             <CardHeader className="border-b">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-2">
-                  <CardTitle className="section-title">Doanh thu thuần</CardTitle>
+                  <div className="flex items-center gap-1.5">
+                    <CardTitle className="section-title">Doanh thu thuần</CardTitle>
+                    <span
+                      title="Doanh thu thuần = Doanh thu - Trả hàng"
+                      className="inline-flex cursor-help items-center text-muted-foreground"
+                    >
+                      <CircleHelp className="size-3.5" />
+                    </span>
+                  </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge className="h-8 rounded-full px-3 text-sm">{formatCurrency(overview.netRevenue)}</Badge>
-                    <p className="text-sm text-muted-foreground">
-                      Tổng doanh thu thu về sau trả hàng tại {overview.branchName}
-                    </p>
+                    <p className="text-sm text-muted-foreground">Doanh thu thuần trong khoảng thời gian đã chọn.</p>
                   </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm">
-                    Tháng này
-                  </Button>
+                  <p className="text-xs text-muted-foreground">{filterNote}</p>
                 </div>
               </div>
             </CardHeader>
 
             <CardContent className="p-4">
-              <Tabs defaultValue="daily" className="space-y-5">
-                <TabsList variant="line" className="gap-5 p-0">
-                  {trendTabs.map((tab) => (
-                    <TabsTrigger
-                      key={tab.value}
-                      value={tab.value}
-                      className="rounded-none px-0 pb-2 text-sm data-active:text-primary"
-                    >
-                      {tab.label}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-
-                {trendTabs.map((tab) => (
-                  <TabsContent key={tab.value} value={tab.value}>
-                    <RevenueBarsChart points={revenueTrend[tab.value]} />
-                  </TabsContent>
-                ))}
-              </Tabs>
+              <RevenueTrendBarChart points={revenueTrend.daily} />
             </CardContent>
           </Card>
 
@@ -393,16 +334,20 @@ export function SalesDashboard() {
             <Card className="app-card">
               <CardHeader className="border-b">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                  <CardTitle className="section-title">Top 10 hàng bán chạy</CardTitle>
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" size="sm">
-                      Theo doanh thu thuần
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      Tháng này
-                    </Button>
+                  <div className="flex items-center gap-1.5">
+                    <CardTitle className="section-title">Top 10 hàng bán chạy</CardTitle>
+                    <span
+                      title="Xếp hạng theo doanh thu thuần = tổng giá trị bán thành công của từng mặt hàng trong khoảng lọc"
+                      className="inline-flex cursor-help items-center text-muted-foreground"
+                    >
+                      <CircleHelp className="size-3.5" />
+                    </span>
                   </div>
+                  <Badge variant="outline" className="h-8 rounded-full px-3 text-xs">
+                    Theo doanh thu thuần
+                  </Badge>
                 </div>
+                <p className="text-xs text-muted-foreground">{filterNote}</p>
               </CardHeader>
               <CardContent className="p-4">
                 <TopBarList items={topProducts} type="products" />
@@ -412,13 +357,20 @@ export function SalesDashboard() {
             <Card className="app-card">
               <CardHeader className="border-b">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                  <CardTitle className="section-title">Top 10 khách mua nhiều nhất</CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
-                      Tháng này
-                    </Button>
+                  <div className="flex items-center gap-1.5">
+                    <CardTitle className="section-title">Top 10 khách mua nhiều nhất</CardTitle>
+                    <span
+                      title="Xếp hạng theo doanh thu thuần = tổng giá trị mua thành công của từng khách hàng trong khoảng lọc"
+                      className="inline-flex cursor-help items-center text-muted-foreground"
+                    >
+                      <CircleHelp className="size-3.5" />
+                    </span>
                   </div>
+                  <Badge variant="outline" className="h-8 rounded-full px-3 text-xs">
+                    Theo doanh thu thuần
+                  </Badge>
                 </div>
+                <p className="text-xs text-muted-foreground">{filterNote}</p>
               </CardHeader>
               <CardContent className="p-4">
                 <TopBarList items={topCustomers} type="customers" />
@@ -427,32 +379,26 @@ export function SalesDashboard() {
           </div>
         </div>
 
-        <Card className="app-card h-fit xl:sticky xl:top-6">
+        <Card className="app-card hidden" aria-hidden>
           <CardHeader className="border-b">
-            <div className="space-y-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="space-y-1">
-                  <CardTitle className="section-title">Danh sách hoạt động</CardTitle>
-                  <p className="text-sm text-muted-foreground">Cập nhật giao dịch, kho và khách hàng gần đây.</p>
-                </div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
-                  <Clock3 className="size-4" />
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-border bg-muted/40 p-4">
-                <p className="text-sm font-medium text-foreground">Cần kiểm tra 1 phiếu trả hàng phát sinh trong ngày.</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Giá trị trả hàng chiếm {((overview.returnValue / overview.grossRevenue) * 100).toFixed(1)}% doanh thu gộp.
-                </p>
-              </div>
-            </div>
+            <CardTitle className="section-title">Danh sách hoạt động</CardTitle>
           </CardHeader>
-          <CardContent className="max-h-[calc(100vh-14rem)] overflow-y-auto p-4">
-            <ActivityFeed items={activityFeed} />
+          <CardContent className="p-4 text-sm text-muted-foreground">
+            Tạm ẩn để phát triển ở giai đoạn sau.
           </CardContent>
         </Card>
       </div>
+      <p className="text-xs text-muted-foreground">
+        Cập nhật gần nhất: {dateTimeFormatter.format(new Date(`${overview.snapshotDate}T23:59:00+07:00`))}
+      </p>
     </div>
   )
+}
+
+function formatYmdDateForDisplay(value: string) {
+  return new Intl.DateTimeFormat("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(`${value}T00:00:00+07:00`))
 }

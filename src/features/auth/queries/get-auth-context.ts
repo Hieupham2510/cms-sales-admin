@@ -3,14 +3,20 @@ import { db } from "@/db";
 import { profileStoreAccess, profiles, stores } from "@/db/schema";
 import { and, asc, eq } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
+import { ACTIVE_STORE_COOKIE } from "@/features/auth/constants";
 import type { AppRole, AuthContext } from "@/features/auth/types";
 
-const ACTIVE_STORE_COOKIE = "active_store_id";
-
 function normalizeRole(value: string | null | undefined): AppRole {
-  if (value === "admin" || value === "manager" || value === "staff") {
-    return value;
+  const normalized = (value ?? "").trim().toLowerCase();
+
+  if (["admin", "administrator", "owner", "super_admin", "superadmin"].includes(normalized)) {
+    return "admin";
   }
+
+  if (["manager", "quanly", "quan_ly", "management"].includes(normalized)) {
+    return "manager";
+  }
+
   return "staff";
 }
 
@@ -47,6 +53,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
             id: stores.id,
             name: stores.name,
             slug: stores.slug,
+            logoUrl: stores.logoUrl,
             isDefault: profileStoreAccess.isDefault,
           })
           .from(stores)
@@ -63,6 +70,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
             id: stores.id,
             name: stores.name,
             slug: stores.slug,
+            logoUrl: stores.logoUrl,
             isDefault: profileStoreAccess.isDefault,
           })
           .from(profileStoreAccess)
@@ -74,6 +82,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     id: item.id,
     name: item.name,
     slug: item.slug,
+    logoUrl: item.logoUrl,
   }));
 
   let activeStoreId: string | null = null;
@@ -115,6 +124,14 @@ export async function getActiveStoreIdOrThrow() {
     throw new Error("Tài khoản chưa được gán cửa hàng");
   }
   return auth.activeStoreId;
+}
+
+export async function requireAdminContext() {
+  const auth = await requireAuthContext();
+  if (auth.role !== "admin") {
+    throw new Error("Bạn không có quyền thực hiện thao tác này");
+  }
+  return auth;
 }
 
 export { ACTIVE_STORE_COOKIE };

@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { TablePagination } from "@/components/shared/table-pagination";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createUserAccountAction } from "@/features/auth/actions/create-user-account-action";
 import type { AppRole } from "@/features/auth/types";
+import { TABLE_PAGE_SIZE } from "@/lib/constants";
 
 type UserAccountRow = {
   id: string;
@@ -56,6 +58,14 @@ export function UserAccountsManager({ actorRole, currentStoreId, accounts, store
   const [role, setRole] = useState<"manager" | "staff">(actorRole === "admin" ? "manager" : "staff");
   const [storeId, setStoreId] = useState(currentStoreId ?? stores[0]?.id ?? "");
   const [isPending, startTransition] = useTransition();
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(accounts.length / TABLE_PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+
+  const pageAccounts = useMemo(() => {
+    const start = (currentPage - 1) * TABLE_PAGE_SIZE;
+    return accounts.slice(start, start + TABLE_PAGE_SIZE);
+  }, [accounts, currentPage]);
 
   const roleOptions = useMemo(
     () =>
@@ -144,7 +154,7 @@ export function UserAccountsManager({ actorRole, currentStoreId, accounts, store
               </tr>
             </thead>
             <tbody>
-              {accounts.map((item) => (
+              {pageAccounts.map((item) => (
                 <tr key={item.id} className="border-b">
                   <td className="px-4 py-3">
                     <div className="font-medium">{item.username}</div>
@@ -182,7 +192,7 @@ export function UserAccountsManager({ actorRole, currentStoreId, accounts, store
                 </tr>
               ))}
 
-              {accounts.length === 0 ? (
+              {pageAccounts.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="h-24 text-center text-muted-foreground">
                     Chưa có tài khoản phù hợp phạm vi quản lý.
@@ -192,6 +202,12 @@ export function UserAccountsManager({ actorRole, currentStoreId, accounts, store
             </tbody>
           </table>
         </div>
+        <TablePagination
+          page={currentPage}
+          totalItems={accounts.length}
+          pageSize={TABLE_PAGE_SIZE}
+          onPageChange={setPage}
+        />
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>

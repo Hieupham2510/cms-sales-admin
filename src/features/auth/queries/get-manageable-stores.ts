@@ -10,6 +10,7 @@ export async function getManageableStores(auth: AuthContext) {
         id: stores.id,
         name: stores.name,
         slug: stores.slug,
+        logoUrl: stores.logoUrl,
       })
       .from(stores)
       .orderBy(asc(stores.name));
@@ -20,6 +21,7 @@ export async function getManageableStores(auth: AuthContext) {
       id: stores.id,
       name: stores.name,
       slug: stores.slug,
+      logoUrl: stores.logoUrl,
     })
     .from(profileStoreAccess)
     .innerJoin(stores, eq(profileStoreAccess.storeId, stores.id))

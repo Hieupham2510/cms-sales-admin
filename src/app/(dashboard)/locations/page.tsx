@@ -6,14 +6,18 @@ import {
   updateLocationAction,
 } from "@/features/locations/actions/location-actions"
 import { getLocationsByStore } from "@/features/locations/queries/get-locations-by-store"
-import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context"
+import { requireAuthContext } from "@/features/auth/queries/get-auth-context"
 
 export default async function LocationsPage() {
-  const storeId = await getActiveStoreIdOrThrow()
-  const locations = await getLocationsByStore(storeId)
+  const auth = await requireAuthContext()
+  if (!auth.activeStoreId) {
+    throw new Error("Tài khoản chưa được gán cửa hàng")
+  }
+  const locations = await getLocationsByStore(auth.activeStoreId)
 
   return (
     <MasterDataManager
+      role={auth.role}
       title="Kho"
       description="Quản lý danh sách kho và vị trí lưu trữ."
       entityLabel="kho"

@@ -9,10 +9,14 @@ import {
   inventoryTransactions,
   products,
 } from "@/db/schema";
-import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
+import { requireAdminContext } from "@/features/auth/queries/get-auth-context";
 
 export async function cancelInventoryCheckAction(checkId: string) {
-  const storeId = await getActiveStoreIdOrThrow();
+  const auth = await requireAdminContext();
+  const storeId = auth.activeStoreId;
+  if (!storeId) {
+    throw new Error("Tài khoản chưa được gán cửa hàng");
+  }
   const checkRows = await db
     .select({
       checkId: inventoryChecks.id,

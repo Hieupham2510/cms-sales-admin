@@ -17,11 +17,11 @@ export function LoadingOverlay({
           : "pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-background/70 backdrop-blur-[1px]"
       }
     >
-      <div className="flex flex-col items-center gap-3 rounded-xl bg-card/95 px-5 py-4 shadow-sm">
-        <div className="relative h-16 w-16 overflow-hidden rounded-lg">
+      <div className="flex flex-col items-center gap-3 rounded-sm bg-card/95 px-5 py-4 shadow-sm">
+        <div className="relative h-16 w-16 overflow-hidden rounded-sm">
           <Image
             src="/logo.png"
-            alt="Áo Dài Liche"
+            alt="Logo cửa hàng"
             fill
             className="object-cover"
             sizes="64px"
@@ -36,4 +36,3 @@ export function LoadingOverlay({
     </div>
   );
 }
-

@@ -6,10 +6,12 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cancelInventoryCheckAction } from "@/features/inventory-checks/actions/cancel-inventory-check-action";
+import type { AppRole } from "@/features/auth/types";
 
 type Props = {
   checkId: string;
   canCancel: boolean;
+  role: AppRole;
   size?: "sm" | "default";
   className?: string;
 };
@@ -17,6 +19,7 @@ type Props = {
 export default function CancelInventoryCheckButton({
   checkId,
   canCancel,
+  role,
   size = "sm",
   className,
 }: Props) {
@@ -39,6 +42,7 @@ export default function CancelInventoryCheckButton({
 
   return (
     <div onClick={(event) => event.stopPropagation()}>
+      {role === "admin" ? (
       <Button
         type="button"
         variant="outline"
@@ -52,6 +56,7 @@ export default function CancelInventoryCheckButton({
       >
         Hủy
       </Button>
+      ) : null}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">

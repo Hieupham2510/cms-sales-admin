@@ -12,9 +12,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 
 type Props = {
   role: "admin" | "manager" | "staff"
+  storeName?: string | null
+  storeLogoUrl?: string | null
 }
 
-export function MobileSidebar({ role }: Props) {
+export function MobileSidebar({ role, storeName, storeLogoUrl }: Props) {
   const pathname = usePathname()
   const navGroups = getDashboardNavGroupsByRole(role)
   const navItems = navGroups.flatMap((group) => group.items)
@@ -38,7 +40,7 @@ export function MobileSidebar({ role }: Props) {
       <SheetContent side="left" className="w-72 p-0">
         <SheetHeader className="border-b border-border p-4 text-left">
           <SheetTitle>
-            <MaiLinhLogo compact />
+            <MaiLinhLogo compact storeName={storeName} logoUrl={storeLogoUrl} />
           </SheetTitle>
         </SheetHeader>
 
@@ -58,7 +60,7 @@ export function MobileSidebar({ role }: Props) {
                     href={item.href}
                     prefetch={false}
                     className={cn(
-                      "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                      "flex items-center gap-2.5 rounded-sm px-3 py-2 text-sm font-medium transition-colors",
                       isActive
                         ? "bg-primary text-primary-foreground"
                         : "text-foreground hover:bg-accent hover:text-accent-foreground"

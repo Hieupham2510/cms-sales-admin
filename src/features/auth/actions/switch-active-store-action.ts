@@ -2,7 +2,8 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { ACTIVE_STORE_COOKIE, requireAuthContext } from "@/features/auth/queries/get-auth-context";
+import { ACTIVE_STORE_COOKIE } from "@/features/auth/constants";
+import { requireAuthContext } from "@/features/auth/queries/get-auth-context";
 
 export async function switchActiveStoreAction(storeId: string) {
   const auth = await requireAuthContext();

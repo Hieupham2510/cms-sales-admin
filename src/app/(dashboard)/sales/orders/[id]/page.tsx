@@ -6,6 +6,7 @@ import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-contex
 import { SalesOrderStatusActions } from "@/features/sales/components/sales-order-status-actions";
 import { variantSummary } from "@/features/products/variant-utils";
 import { getSalesOrderById } from "@/features/sales/queries/get-sales-order-by-id";
+import { TABLE_PAGE_SIZE } from "@/lib/constants";
 import {
   formatCurrency,
   formatDateTime,
@@ -15,10 +16,15 @@ import {
 
 export default async function SalesOrderDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ page?: string }>;
 }) {
   const { id } = await params;
+  const query = (await searchParams) ?? {};
+  const requestedPage = Number(query.page ?? "1");
+  const currentPage = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
   const storeId = await getActiveStoreIdOrThrow();
   const order = await getSalesOrderById({ id, storeId });
 
@@ -27,6 +33,11 @@ export default async function SalesOrderDetailPage({
   }
 
   const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalItems = order.items.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / TABLE_PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const start = (safePage - 1) * TABLE_PAGE_SIZE;
+  const pageItems = order.items.slice(start, start + TABLE_PAGE_SIZE);
 
   return (
     <div className="section-block space-y-6">
@@ -97,7 +108,7 @@ export default async function SalesOrderDetailPage({
               </tr>
             </thead>
             <tbody>
-              {order.items.map((item) => (
+              {pageItems.map((item) => (
                 <tr key={item.id} className="border-b last:border-b-0">
                   <td className="px-4 py-3 font-medium">{item.skuSnapshot}</td>
                   <td className="px-4 py-3">
@@ -118,6 +129,36 @@ export default async function SalesOrderDetailPage({
             </tbody>
           </table>
         </div>
+        {totalItems > TABLE_PAGE_SIZE ? (
+          <div className="flex flex-col items-center justify-between gap-2 border-t px-4 py-3 text-sm text-muted-foreground md:flex-row">
+            <p>
+              Hiển thị {start + 1}-{Math.min(start + TABLE_PAGE_SIZE, totalItems)} / {totalItems}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={safePage <= 1}
+                render={<Link href={`/sales/orders/${order.id}?page=${Math.max(1, safePage - 1)}`} />}
+                nativeButton={false}
+              >
+                Trước
+              </Button>
+              <span className="min-w-16 text-center text-foreground">
+                {safePage}/{totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={safePage >= totalPages}
+                render={<Link href={`/sales/orders/${order.id}?page=${Math.min(totalPages, safePage + 1)}`} />}
+                nativeButton={false}
+              >
+                Sau
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="rounded-xl border bg-card p-5">

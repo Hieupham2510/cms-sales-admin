@@ -15,6 +15,7 @@ import {
 } from "@/features/products/schemas/product-form-schema";
 import ProductDescriptionTab from "./product-description-tab";
 import ProductInformationTab from "./product-information-tab";
+import type { AppRole } from "@/features/auth/types";
 
 type Option = {
   id: string;
@@ -34,6 +35,7 @@ type Props = {
   categories?: Option[];
   brands?: Option[];
   locations?: Option[];
+  role: AppRole;
   submitAction: (
     values: ProductFormValues,
   ) => Promise<{ id?: string; success?: boolean } | void>;
@@ -63,6 +65,7 @@ export function ProductForm({
   categories = [],
   brands = [],
   locations = [],
+  role,
   submitAction,
 }: Props) {
   const [isPending, startTransition] = useTransition();
@@ -213,6 +216,7 @@ export function ProductForm({
             categories={categories}
             brands={brands}
             locations={locations}
+            role={role}
           />
         </TabsContent>
 

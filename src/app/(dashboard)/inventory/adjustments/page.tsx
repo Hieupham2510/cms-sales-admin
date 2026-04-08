@@ -2,10 +2,12 @@ import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
-import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
+import { Button } from "@/components/ui/button";
+import { requireAuthContext } from "@/features/auth/queries/get-auth-context";
 import CancelInventoryCheckButton from "@/features/inventory-checks/components/cancel-inventory-check-button";
 import { getInventoryCheckById } from "@/features/inventory-checks/queries/get-inventory-check-by-id";
 import { getInventoryChecksByStore } from "@/features/inventory-checks/queries/get-inventory-checks-by-store";
+import { TABLE_PAGE_SIZE } from "@/lib/constants";
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("vi-VN", {
@@ -23,11 +25,28 @@ function formatCurrency(value: string) {
   }).format(Number(value));
 }
 
-export default async function InventoryAdjustmentsPage() {
-  const storeId = await getActiveStoreIdOrThrow();
+export default async function InventoryAdjustmentsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ page?: string }>;
+}) {
+  const auth = await requireAuthContext();
+  if (!auth.activeStoreId) {
+    throw new Error("Tài khoản chưa được gán cửa hàng");
+  }
+  const params = (await searchParams) ?? {};
+  const requestedPage = Number(params.page ?? "1");
+  const currentPage = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const storeId = auth.activeStoreId;
   const checks = await getInventoryChecksByStore(storeId);
+  const totalItems = checks.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / TABLE_PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const start = (safePage - 1) * TABLE_PAGE_SIZE;
+  const pageChecks = checks.slice(start, start + TABLE_PAGE_SIZE);
+
   const detailedChecks = await Promise.all(
-    checks.map((check) =>
+    pageChecks.map((check) =>
       getInventoryCheckById({ id: check.id, storeId }),
     ),
   );
@@ -62,7 +81,7 @@ export default async function InventoryAdjustmentsPage() {
             Chưa có phiếu kiểm kho.
           </div>
         ) : (
-          checks.map((item, index) => {
+          pageChecks.map((item, index) => {
             const detail = detailedCheckMap.get(item.id);
             const detailTotalDiffValue = detail
               ? detail.items.reduce(
@@ -92,6 +111,7 @@ export default async function InventoryAdjustmentsPage() {
                     <CancelInventoryCheckButton
                       checkId={item.id}
                       canCancel={item.canCancel}
+                      role={auth.role}
                       size="sm"
                     />
                   </div>
@@ -199,6 +219,36 @@ export default async function InventoryAdjustmentsPage() {
             );
           })
         )}
+        {totalItems > TABLE_PAGE_SIZE ? (
+          <div className="flex flex-col items-center justify-between gap-2 border-t px-4 py-3 text-sm text-muted-foreground md:flex-row">
+            <p>
+              Hiển thị {start + 1}-{Math.min(start + TABLE_PAGE_SIZE, totalItems)} / {totalItems}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={safePage <= 1}
+                render={<Link href={`/inventory/adjustments?page=${Math.max(1, safePage - 1)}`} />}
+                nativeButton={false}
+              >
+                Trước
+              </Button>
+              <span className="min-w-16 text-center text-foreground">
+                {safePage}/{totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={safePage >= totalPages}
+                render={<Link href={`/inventory/adjustments?page=${Math.min(totalPages, safePage + 1)}`} />}
+                nativeButton={false}
+              >
+                Sau
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

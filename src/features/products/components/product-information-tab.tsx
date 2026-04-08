@@ -38,6 +38,7 @@ import {
   updateLocationAction,
   deleteLocationAction,
 } from "@/features/locations/actions/location-actions";
+import type { AppRole } from "@/features/auth/types";
 
 type Option = {
   id: string;
@@ -49,6 +50,7 @@ type Props = {
   categories: Option[];
   brands: Option[];
   locations: Option[];
+  role: AppRole;
 };
 
 function toDigits(value: string) {
@@ -104,6 +106,7 @@ export default function ProductInformationTab({
   categories,
   brands,
   locations,
+  role,
 }: Props) {
   const { register, setValue, watch } = form;
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
@@ -626,6 +629,7 @@ export default function ProductInformationTab({
       </SectionCard>
 
       <OptionManagerDialog
+        role={role}
         open={isCategoryDialogOpen}
         onOpenChange={setIsCategoryDialogOpen}
         title="Quản lý nhóm hàng"
@@ -642,6 +646,7 @@ export default function ProductInformationTab({
       />
 
       <OptionManagerDialog
+        role={role}
         open={isBrandDialogOpen}
         onOpenChange={setIsBrandDialogOpen}
         title="Quản lý thương hiệu"
@@ -657,6 +662,7 @@ export default function ProductInformationTab({
         deleteAction={deleteBrandAction}
       />
       <OptionManagerDialog
+        role={role}
         open={isLocationDialogOpen}
         onOpenChange={setIsLocationDialogOpen}
         title="Quản lý vị trí"

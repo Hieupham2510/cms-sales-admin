@@ -1,17 +1,21 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { TablePagination } from "@/components/shared/table-pagination";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { deleteProductAction } from "@/features/products/actions/delete-product-action";
+import type { AppRole } from "@/features/auth/types";
 import type { ProductRow } from "../types";
+import { TABLE_PAGE_SIZE } from "@/lib/constants";
 
 type Props = {
   data: ProductRow[];
+  role: AppRole;
 };
 
 function formatCurrency(value: string) {
@@ -68,10 +72,18 @@ function getStockStatusBadge(status: ReturnType<typeof getStockStatus>) {
   }
 }
 
-export function ProductsTable({ data }: Props) {
+export function ProductsTable({ data, role }: Props) {
   const router = useRouter();
   const [deletingProduct, setDeletingProduct] = useState<ProductRow | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(data.length / TABLE_PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+
+  const pageData = useMemo(() => {
+    const start = (currentPage - 1) * TABLE_PAGE_SIZE;
+    return data.slice(start, start + TABLE_PAGE_SIZE);
+  }, [currentPage, data]);
 
   const handleDeleteProduct = () => {
     if (!deletingProduct) return;
@@ -122,7 +134,7 @@ export function ProductsTable({ data }: Props) {
           </thead>
 
           <tbody>
-            {data.map((item) => {
+            {pageData.map((item) => {
               const stockStatus = getStockStatus(item);
               const stockStatusBadge = getStockStatusBadge(stockStatus);
 
@@ -186,7 +198,9 @@ export function ProductsTable({ data }: Props) {
                     </div>
                   </td>
 
-                  <td className="px-4 py-3 text-right align-top tabular">0</td>
+                  <td className="px-4 py-3 text-right align-top tabular">
+                    {item.customerOrderQuantity}
+                  </td>
 
                   <td className="px-4 py-3 align-top">
                     {formatDate(item.createdAt)}
@@ -197,25 +211,27 @@ export function ProductsTable({ data }: Props) {
                     onClick={(event) => event.stopPropagation()}
                     onKeyDown={(event) => event.stopPropagation()}
                   >
-                    <div className="flex justify-end">
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="ghost"
-                        className="text-muted-foreground hover:text-destructive"
-                        onClick={() => setDeletingProduct(item)}
-                        aria-label={`Xóa sản phẩm ${item.name}`}
-                        title="Xóa sản phẩm"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    {role === "admin" ? (
+                      <div className="flex justify-end">
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="text-muted-foreground hover:text-destructive"
+                          onClick={() => setDeletingProduct(item)}
+                          aria-label={`Xóa sản phẩm ${item.name}`}
+                          title="Xóa sản phẩm"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : null}
                   </td>
                 </tr>
               );
             })}
 
-            {data.length === 0 ? (
+            {pageData.length === 0 ? (
               <tr>
                 <td
                   colSpan={8}
@@ -228,6 +244,12 @@ export function ProductsTable({ data }: Props) {
           </tbody>
         </table>
       </div>
+      <TablePagination
+        page={currentPage}
+        totalItems={data.length}
+        pageSize={TABLE_PAGE_SIZE}
+        onPageChange={setPage}
+      />
 
       <Dialog
         open={Boolean(deletingProduct)}

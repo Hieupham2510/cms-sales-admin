@@ -1,12 +1,23 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CustomersTable } from "@/features/customers/components/customers-table";
-import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
+import { requireAuthContext } from "@/features/auth/queries/get-auth-context";
 import { getCustomers } from "@/features/customers/queries/get-customers";
 
-export default async function CustomersPage() {
-  const storeId = await getActiveStoreIdOrThrow();
-  const customers = await getCustomers({ storeId });
+type Props = {
+  searchParams?: Promise<{
+    search?: string;
+  }>;
+};
+
+export default async function CustomersPage({ searchParams }: Props) {
+  const auth = await requireAuthContext();
+  if (!auth.activeStoreId) {
+    throw new Error("Tài khoản chưa được gán cửa hàng");
+  }
+
+  const params = (await searchParams) ?? {};
+  const customers = await getCustomers({ storeId: auth.activeStoreId, search: params.search });
 
   return (
     <div className="section-block space-y-6">
@@ -25,7 +36,7 @@ export default async function CustomersPage() {
         </div>
       </div>
 
-      <CustomersTable data={customers} />
+      <CustomersTable data={customers} role={auth.role} />
     </div>
   );
 }

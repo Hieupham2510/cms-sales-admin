@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { ProductForm } from "@/features/products/components/product-form";
-import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
+import { requireAuthContext } from "@/features/auth/queries/get-auth-context";
 import { getCategoriesByStore } from "@/features/categories/queries/get-categories-by-store";
 import { getBrandsByStore } from "@/features/brands/queries/get-brands-by-store";
 import { getLocationsByStore } from "@/features/locations/queries/get-locations-by-store";
@@ -14,13 +14,16 @@ export default async function ProductDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const storeId = await getActiveStoreIdOrThrow();
+  const auth = await requireAuthContext();
+  if (!auth.activeStoreId) {
+    throw new Error("Tài khoản chưa được gán cửa hàng");
+  }
 
   const [categories, brands, locations, product] = await Promise.all([
-    getCategoriesByStore(storeId),
-    getBrandsByStore(storeId),
-    getLocationsByStore(storeId),
-    getProductById({ id, storeId }),
+    getCategoriesByStore(auth.activeStoreId),
+    getBrandsByStore(auth.activeStoreId),
+    getLocationsByStore(auth.activeStoreId),
+    getProductById({ id, storeId: auth.activeStoreId }),
   ]);
 
   if (!product) {
@@ -64,6 +67,7 @@ export default async function ProductDetailPage({
         categories={categories}
         brands={brands}
         locations={locations}
+        role={auth.role}
         submitAction={submitAction}
       />
     </div>

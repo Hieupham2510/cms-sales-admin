@@ -137,7 +137,7 @@ export const dashboardMockData: DashboardMockData = {
   overview: {
     snapshotDate: "2026-03-31",
     storeId: "STORE-HCM-01",
-    storeName: "Áo dài Mai Linh",
+    storeName: "Cửa hàng trung tâm",
     branchId: "BR-HCM-Q1",
     branchName: "Flagship Nguyễn Huệ",
     grossRevenue: 15623150,
@@ -154,7 +154,7 @@ export const dashboardMockData: DashboardMockData = {
     weekday: weekdayTrend,
   },
   topProducts: [
-    { productId: "PRD-AD-001", sku: "AD-ML-001", productName: "Áo dài Lụa Thượng Mai Linh", variantName: "Đỏ rượu - Size M", categoryName: "Áo dài nữ", quantitySold: 42, grossRevenue: 104580000, netRevenue: 98640000, returnQuantity: 1, orderCount: 27 },
+    { productId: "PRD-AD-001", sku: "AD-ML-001", productName: "Áo dài Lụa Thượng", variantName: "Đỏ rượu - Size M", categoryName: "Áo dài nữ", quantitySold: 42, grossRevenue: 104580000, netRevenue: 98640000, returnQuantity: 1, orderCount: 27 },
     { productId: "PRD-AD-014", sku: "AD-ML-014", productName: "Áo dài Gấm Hoa Sen", variantName: "Kem vàng - Size S", categoryName: "Áo dài nữ", quantitySold: 36, grossRevenue: 83200000, netRevenue: 79600000, returnQuantity: 1, orderCount: 23 },
     { productId: "PRD-AD-022", sku: "AD-ML-022", productName: "Áo dài Cổ Tàu Thêu Tay", variantName: "Xanh ngọc - Size L", categoryName: "Áo dài thiết kế", quantitySold: 31, grossRevenue: 71450000, netRevenue: 68200000, returnQuantity: 1, orderCount: 20 },
     { productId: "PRD-QB-004", sku: "QB-ML-004", productName: "Quần Lụa Ống Suông", variantName: "Trắng kem - Size M", categoryName: "Quần áo dài", quantitySold: 54, grossRevenue: 64500000, netRevenue: 62150000, returnQuantity: 2, orderCount: 29 },

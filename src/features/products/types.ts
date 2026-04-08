@@ -82,4 +82,5 @@ export type ProductRow = {
   locationName: string | null;
 
   thumbnailUrl: string | null;
+  customerOrderQuantity: number;
 };

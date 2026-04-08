@@ -4,6 +4,7 @@ export type AuthStore = {
   id: string;
   name: string;
   slug: string;
+  logoUrl: string | null;
 };
 
 export type AuthContext = {

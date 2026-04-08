@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { productImages, products } from "@/db/schema";
-import { getActiveStoreIdOrThrow } from "@/features/auth/queries/get-auth-context";
+import { requireAdminContext } from "@/features/auth/queries/get-auth-context";
 import { createClient } from "@/lib/supabase/server";
 
 function extractProductImagePath(publicUrl: string) {
@@ -18,7 +18,11 @@ function extractProductImagePath(publicUrl: string) {
 }
 
 export async function deleteProductAction(productId: string) {
-  const storeId = await getActiveStoreIdOrThrow();
+  const auth = await requireAdminContext();
+  const storeId = auth.activeStoreId;
+  if (!storeId) {
+    throw new Error("Tài khoản chưa được gán cửa hàng");
+  }
   const supabase = await createClient();
 
   const product = await db

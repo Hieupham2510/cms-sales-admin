@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import type { AppRole } from "@/features/auth/types";
 
 type Item = {
   id: string;
@@ -13,6 +14,7 @@ type Item = {
 };
 
 type Props = {
+  role: AppRole;
   open: boolean;
   onOpenChange: (value: boolean) => void;
   title: string;
@@ -26,6 +28,7 @@ type Props = {
 };
 
 export function OptionManagerDialog({
+  role,
   open,
   onOpenChange,
   title,
@@ -188,14 +191,16 @@ export function OptionManagerDialog({
                           <Pencil className="h-4 w-4" />
                         </Button>
 
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => setDeletingItem(item)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {role === "admin" ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setDeletingItem(item)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        ) : null}
 
                         <Button
                           type="button"
