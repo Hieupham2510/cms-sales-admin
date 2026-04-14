@@ -16,10 +16,8 @@ export function TablePagination({
   onPageChange,
 }: Props) {
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
-  if (totalItems <= pageSize) return null;
-
-  const from = (page - 1) * pageSize + 1;
-  const to = Math.min(page * pageSize, totalItems);
+  const from = totalItems === 0 ? 0 : (page - 1) * pageSize + 1;
+  const to = totalItems === 0 ? 0 : Math.min(page * pageSize, totalItems);
 
   return (
     <div className="flex flex-col items-center justify-between gap-2 border-t px-4 py-3 text-sm text-muted-foreground md:flex-row">
@@ -52,4 +50,3 @@ export function TablePagination({
     </div>
   );
 }
-

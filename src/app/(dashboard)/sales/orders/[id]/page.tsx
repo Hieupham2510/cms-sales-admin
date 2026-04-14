@@ -129,36 +129,34 @@ export default async function SalesOrderDetailPage({
             </tbody>
           </table>
         </div>
-        {totalItems > TABLE_PAGE_SIZE ? (
-          <div className="flex flex-col items-center justify-between gap-2 border-t px-4 py-3 text-sm text-muted-foreground md:flex-row">
-            <p>
-              Hiển thị {start + 1}-{Math.min(start + TABLE_PAGE_SIZE, totalItems)} / {totalItems}
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={safePage <= 1}
-                render={<Link href={`/sales/orders/${order.id}?page=${Math.max(1, safePage - 1)}`} />}
-                nativeButton={false}
-              >
-                Trước
-              </Button>
-              <span className="min-w-16 text-center text-foreground">
-                {safePage}/{totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={safePage >= totalPages}
-                render={<Link href={`/sales/orders/${order.id}?page=${Math.min(totalPages, safePage + 1)}`} />}
-                nativeButton={false}
-              >
-                Sau
-              </Button>
-            </div>
+        <div className="flex flex-col items-center justify-between gap-2 border-t px-4 py-3 text-sm text-muted-foreground md:flex-row">
+          <p>
+            Hiển thị {totalItems === 0 ? 0 : start + 1}-{Math.min(start + TABLE_PAGE_SIZE, totalItems)} / {totalItems}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={safePage <= 1}
+              render={<Link href={`/sales/orders/${order.id}?page=${Math.max(1, safePage - 1)}`} />}
+              nativeButton={false}
+            >
+              Trước
+            </Button>
+            <span className="min-w-16 text-center text-foreground">
+              {safePage}/{totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={safePage >= totalPages}
+              render={<Link href={`/sales/orders/${order.id}?page=${Math.min(totalPages, safePage + 1)}`} />}
+              nativeButton={false}
+            >
+              Sau
+            </Button>
           </div>
-        ) : null}
+        </div>
       </div>
 
       <div className="rounded-xl border bg-card p-5">
